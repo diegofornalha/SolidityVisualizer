@@ -93,21 +93,3 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 Shoutout to [Romain Courtois](https://github.com/cyclotruc)'s [Gitingest](https://gitingest.com/) for inspiration and styling
 
-## 📈 Rate Limits
-
-I am currently hosting it for free with no rate limits though this is somewhat likely to change in the future.
-
-<!-- If you would like to bypass these, self-hosting instructions are provided. I also plan on adding an input for your own Anthropic API key.
-
-Diagram generation:
-
-- 1 request per minute
-- 5 requests per day -->
-
-## 🤔 Future Steps
-
-- Implement font-awesome icons in diagram
-- Implement an embedded feature like star-history.com but for diagrams. The diagram could also be updated progressively as commits are made.
-# SolidityVisualizer
-# SolidityVisualizer
-# SolidityVisualizer
