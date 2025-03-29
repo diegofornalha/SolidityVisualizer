@@ -1,5 +1,5 @@
 export const exampleRepos = {
-  UniswapV3Periphery: "https://github.com/Uniswap/v4-periphery",
-  UniswapV3Core: "https://github.com/Uniswap/v3-core",
-  TornadoCashRebuilt: "https://github.com/nkrishang/tornado-cash-rebuilt",
+  UniswapV3Periphery: "Uniswap/v4-periphery",
+  UniswapV3Core: "Uniswap/v3-core",
+  TornadoCashRebuilt: "nkrishang/tornado-cash-rebuilt",
 };

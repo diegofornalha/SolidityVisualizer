@@ -154,48 +154,89 @@ HERE'S A COMPLETE EXAMPLE OF PROPER SYNTAX AND FLOW:
 sequenceDiagram
     %% Participants
     participant User
-    participant Contract
-    participant Proxy
-    participant Storage
-    participant Events
+    participant Frontend
+    participant AuthService
+    participant DB
+    participant EmailService
 
-    %% Initial deployment
-    User ->> Contract: deploy()
-    activate Contract
-    Contract ->> Proxy: initialize()
-    activate Proxy
-    Proxy -->> Contract: success
-    deactivate Proxy
-    Contract -->> User: deployed
-    deactivate Contract
+    %% Initial interaction
+    User ->> Frontend: click "Sign Up"
+    activate Frontend
 
-    %% Function call with validation
-    User ->> Contract: execute(data)
-    activate Contract
-    
-    alt Valid Input
-        Contract ->> Storage: store(data)
-        Storage -->> Contract: success
-        Contract ->> Events: emit Status
-    else
-        Contract ->> Events: emit Error
-        Contract --x User: revert
+    %% Form submission
+    Frontend ->> AuthService: createUser(name, email, password)
+    deactivate Frontend
+    activate AuthService
+
+    %% Backend validation
+    AuthService ->> AuthService: validateInput()
+    AuthService ->> DB: checkIfUserExists(email)
+    activate DB
+    DB -->> AuthService: userNotFound
+    deactivate DB
+
+    %% Create user
+    AuthService ->> DB: insertUser(data)
+    activate DB
+    DB -->> AuthService: userId
+    deactivate DB
+
+    %% Send welcome email
+    AuthService ->> EmailService: sendWelcomeEmail(email)
+    activate EmailService
+    EmailService -->> AuthService: emailSent
+    deactivate EmailService
+
+    %% Auth token creation
+    AuthService ->> AuthService: generateJWT(userId)
+    AuthService -->> Frontend: token, userData
+    deactivate AuthService
+    activate Frontend
+
+    %% Frontend confirmation
+    Frontend ->> User: show success screen
+    deactivate Frontend
+
+    %% Conditionals
+    alt EmailService Down
+        activate AuthService
+        AuthService ->> AuthService: logError("email failed")
+        deactivate AuthService
+    else Email sent successfully
+        activate AuthService
+        AuthService ->> DB: updateUser(emailSent=true)
+        activate DB
+        DB -->> AuthService: OK
+        deactivate DB
+        deactivate AuthService
     end
-    
-    deactivate Contract
 
-    %% Optional logging
-    opt Debug Mode
-        Contract ->> Events: emit Debug
+    %% Optional block
+    opt Remember Me
+        activate Frontend
+        Frontend ->> LocalStorage: store token
+        deactivate Frontend
     end
 
-    %% Retry logic
-    loop Max 3 attempts
-        Contract ->> Storage: retry()
+    %% Looping flow
+    loop Retry on Failure (max 3 times)
+        activate Frontend
+        Frontend ->> AuthService: createUser(...)
+        deactivate Frontend
+        activate AuthService
+        AuthService ->> DB: checkIfUserExists(...)
+        DB -->> AuthService: ...
+        deactivate AuthService
     end
 
-    Note right of Contract: Handles core logic
-    Note over Storage,Events: Persistent state
+    %% Note annotations
+    Note right of User: Enters name, email and password
+    Note left of AuthService: Handles all signup logic
+    Note over EmailService, DB: Sends confirmation and updates user record
+
+    %% Styling (not officially supported in sequenceDiagram yet but shown for completeness)
+    %% classDef service fill:#bbf,stroke:#333,stroke-width:2px
+    %% class AuthService,EmailService,DB service
 ```
 
 VALIDATION CHECKLIST (VERIFY BEFORE RETURNING):
