@@ -108,7 +108,7 @@ export default function MainCard({
             type="submit"
             className="gradient-hover rounded-md border-0 p-4 px-4 text-base font-semibold text-primary-foreground shadow-md transition-all hover:shadow-lg sm:p-6 sm:px-6 sm:text-lg"
           >
-            Diagram
+            Visualize
           </Button>
         </div>
 
