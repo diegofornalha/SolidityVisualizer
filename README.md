@@ -53,7 +53,7 @@ Then edit the `.env` file with your Anthropic API key and optional GitHub person
 4. Run backend
 
 ```bash
-docker-compose up --build -d
+docker compose up --build -d
 ```
 
 Logs available at `docker-compose logs -f`
