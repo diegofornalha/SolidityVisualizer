@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "~/components/ui/button";
-import { FileText, Check } from "lucide-react";
+import { FileText, Check, Loader2 } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -10,15 +10,18 @@ import {
 
 interface CopyButtonProps {
   onClick: () => void;
+  loading?: boolean;
 }
 
-export function CopyButton({ onClick }: CopyButtonProps) {
+export function CopyButton({ onClick, loading = false }: CopyButtonProps) {
   const [copied, setCopied] = useState(false);
 
   const handleClick = () => {
-    onClick();
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
+    if (!loading) {
+      onClick();
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
+    }
   };
 
   return (
@@ -27,9 +30,12 @@ export function CopyButton({ onClick }: CopyButtonProps) {
         <TooltipTrigger asChild>
           <Button
             onClick={handleClick}
-            className="border-[3px] border-black bg-green-400 p-4 px-4 text-base text-black shadow-[4px_4px_0_0_#000000] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 hover:transform hover:bg-green-400 sm:p-6 sm:px-6 sm:text-lg"
+            disabled={loading}
+            className="border-[3px] border-black bg-green-400 p-4 px-4 text-base text-black shadow-[4px_4px_0_0_#000000] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 hover:transform hover:bg-green-400 sm:p-6 sm:px-6 sm:text-lg relative"
           >
-            {copied ? (
+            {loading ? (
+              <Loader2 className="h-6 w-6 animate-spin" />
+            ) : copied ? (
               <>
                 <Check className="h-6 w-6" />
                 <span className="text-sm">Copied!</span>

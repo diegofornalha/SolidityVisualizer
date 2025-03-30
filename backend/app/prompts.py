@@ -144,10 +144,13 @@ STRICT SYNTAX RULES (YOU MUST FOLLOW THESE EXACTLY):
      ```
 
 6. Notes:
-   - Right of participant: `Note right of ParticipantName: text`
-   - Left of participant: `Note left of ParticipantName: text`
-   - Over participants: `Note over Participant1,Participant2: text`
-   - Example: `Note right of Contract: Deploys new instance`
+- Use only **two participants** in `Note over X,Y:` (no more). ✅ IMPORTANT!
+- Right of participant: `Note right of ParticipantName: text`
+- Left of participant: `Note left of ParticipantName: text`
+- Over participants: `Note over Participant1,Participant2: text`
+- Example: `Note right of Contract: Deploys new instance`
+- Do not use `\n` for line breaks in notes — use `<br/>` instead. ✅
+- Avoid `style` or `classDef` blocks — they are **not supported** in `sequenceDiagram`.
 
 HERE'S A COMPLETE EXAMPLE OF PROPER SYNTAX AND FLOW:
 ```mermaid

@@ -76,7 +76,7 @@ export function Header() {
             <span className="hidden sm:inline">GitHub</span>
           </Link>
           <span className="flex items-center gap-1 text-sm font-medium text-foreground">
-            <span className="text-primary">★</span>
+            <span className="text-primary text-yellow-500">★</span>
             {formatStarCount(starCount)}
           </span>
         </nav>
