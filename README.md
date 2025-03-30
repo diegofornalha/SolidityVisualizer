@@ -21,6 +21,8 @@ Visualize any Solidity project.
 
 This project was created to help Solidity developers explore and understand Blockchain projects faster and better, personally I have been in the position where I need to understand a new project but quickly realized the codebase is too massive for me to dig through manually, not to mention that Solidity smart contracts are not always the easiest to understand.
 
+Please follow the instructions to run this locally, this is a demo app and it is not deployed anyhwere yet.
+
 ## 🔒 How to diagram private repositories
 
 You can simply click on "Private Repos" in the header and follow the instructions by providing a GitHub personal access token with the `repo` scope.
