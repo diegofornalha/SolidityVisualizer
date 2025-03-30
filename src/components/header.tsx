@@ -65,8 +65,8 @@ export function Header() {
             onClick={() => setIsPrivateReposDialogOpen(true)}
             className="cursor-pointer text-sm font-medium text-foreground transition-transform hover:translate-y-[-2px] hover:text-primary"
           >
-            <span className="sm:hidden">Private Repos</span>
-            <span className="hidden sm:inline">Private Repos</span>
+            <span className="sm:hidden">GitHub PAT</span>
+            <span className="hidden sm:inline">GitHub PAT</span>
           </span>
           <Link
             href="https://github.com/VGabriel45/solidityVisualizer"

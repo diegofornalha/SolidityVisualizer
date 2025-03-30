@@ -47,7 +47,7 @@ export function PrivateReposDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="text-sm">
-            To enable private repositories, you&apos;ll need to provide a GitHub
+            To get diagrams without rate limits, you&apos;ll need to provide a GitHub PAT (classic) with at least public read access to repos.
             Personal Access Token with repo scope. The token will be stored
             locally in your browser. Find out how{" "}
             <Link

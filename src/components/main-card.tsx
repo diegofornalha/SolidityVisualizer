@@ -50,6 +50,7 @@ export default function MainCard({
   >(null);
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(false);
+  const [hasGitHubPAT, setHasGitHubPAT] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -66,7 +67,9 @@ export default function MainCard({
 
   useEffect(() => {
     const storedKey = localStorage.getItem("openai_key");
+    const storedPAT = localStorage.getItem("github_pat");
     setHasApiKey(!!storedKey);
+    setHasGitHubPAT(!!storedPAT);
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -75,6 +78,11 @@ export default function MainCard({
 
     if (!hasApiKey) {
       setShowApiKeyDialog(true);
+      return;
+    }
+
+    if (!hasGitHubPAT) {
+      router.push('/?openPrivateRepos=true');
       return;
     }
 
@@ -125,29 +133,47 @@ export default function MainCard({
           />
           <Button
             type="submit"
-            className={`gradient-hover rounded-md border-0 p-4 px-4 text-base font-semibold text-primary-foreground shadow-md transition-all hover:shadow-lg sm:p-6 sm:px-6 sm:text-lg ${!hasApiKey ? 'opacity-50 cursor-not-allowed' : ''}`}
-            disabled={!hasApiKey}
+            className={`gradient-hover rounded-md border-0 p-4 px-4 text-base font-semibold text-primary-foreground shadow-md transition-all hover:shadow-lg sm:p-6 sm:px-6 sm:text-lg ${(!hasApiKey || !hasGitHubPAT) ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!hasApiKey || !hasGitHubPAT}
           >
-            {hasApiKey ? 'Visualize' : (
+            {hasApiKey && hasGitHubPAT ? 'Visualize' : (
               <>
                 <Key className="mr-2 h-5 w-5" />
-                Set API Key
+                {!hasApiKey && !hasGitHubPAT ? 'Set API Keys' : (!hasApiKey ? 'Set API Key' : 'Set GitHub PAT')}
               </>
             )}
           </Button>
         </div>
 
-        {!hasApiKey && (
+        {(!hasApiKey || !hasGitHubPAT) && (
           <div className="text-sm text-primary">
-            <p className="mb-2">An OpenAI API key is required to generate diagrams for your own repositories. The diagrams will be generated using your API key and billed to your OpenAI account.</p>
-            <Button
-              type="button"
-              onClick={() => setShowApiKeyDialog(true)}
-              className="text-sm font-medium text-primary hover:text-primary/80"
-              variant="link"
-            >
-              Click here to set your API key
-            </Button>
+            {!hasApiKey && (
+              <>
+                <p className="mb-2">An OpenAI API key is required to generate diagrams for your own repositories. The diagrams will be generated using your API key and billed to your OpenAI account.</p>
+                <Button
+                  type="button"
+                  onClick={() => setShowApiKeyDialog(true)}
+                  className="text-sm font-medium text-primary hover:text-primary/80"
+                  variant="link"
+                >
+                  Click here to set your API key
+                </Button>
+              </>
+            )}
+            
+            {!hasGitHubPAT && (
+              <>
+                <p className="mt-4 mb-2">A GitHub Personal Access Token (PAT) is required to access repositories.</p>
+                <Button
+                  type="button"
+                  onClick={() => router.push('/?openPrivateRepos=true')}
+                  className="text-sm font-medium text-primary hover:text-primary/80"
+                  variant="link"
+                >
+                  Click here to set your GitHub PAT
+                </Button>
+              </>
+            )}
           </div>
         )}
 
