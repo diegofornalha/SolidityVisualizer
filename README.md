@@ -93,3 +93,22 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 Shoutout to [Romain Courtois](https://github.com/cyclotruc)'s [Gitingest](https://gitingest.com/) for inspiration and styling
 
+## Support the Project
+
+Solidity Visualizer is an open-source tool. If you find it useful for your work, consider supporting the ongoing development.
+
+### Buy Me a Coffee
+
+<a href='https://ko-fi.com/vgabriel45'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi5.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+
+### Crypto Donations
+`0x373aa015cEeE5dca6740E5003433142894Bf5E0c`
+
+### Other Ways to Support
+
+- ⭐ Star this repository
+- 🔀 Share with others who might find it useful
+- 🐛 Report bugs and suggest features
+- 💻 Contribute to the codebase
+
+Your support helps make Solidity Visualizer better for everyone in the blockchain community! Thank you!
