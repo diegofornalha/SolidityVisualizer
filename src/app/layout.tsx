@@ -5,6 +5,7 @@ import { type Metadata } from "next";
 import { Header } from "~/components/header";
 import { Footer } from "~/components/footer";
 import { CSPostHogProvider } from "./providers";
+import { Analytics } from "@vercel/analytics/react"
 
 export const metadata: Metadata = {
   title: "Solidity Git Diagram",
@@ -78,6 +79,7 @@ export default function RootLayout({
           <Header />
           <main className="flex-grow">{children}</main>
           <Footer />
+          <Analytics />
         </body>
       </CSPostHogProvider>
     </html>
