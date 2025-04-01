@@ -31,7 +31,7 @@ export async function generateAndCacheDiagram(
 ): Promise<GenerateApiResponse> {
   try {
     const baseUrl =
-      process.env.NEXT_PUBLIC_API_DEV_URL ?? "https://api..com";
+      process.env.NEXT_PUBLIC_API_DEV_URL ?? process.env.NEXT_PUBLIC_API_PROD_URL;
     const url = new URL(`${baseUrl}/generate`);
 
     const response = await fetch(url, {
@@ -87,7 +87,7 @@ export async function modifyAndCacheDiagram(
     }
 
     const baseUrl =
-      process.env.NEXT_PUBLIC_API_DEV_URL ?? "https://api..com";
+      process.env.NEXT_PUBLIC_API_DEV_URL ?? process.env.NEXT_PUBLIC_API_PROD_URL;
     const url = new URL(`${baseUrl}/modify`);
 
     const response = await fetch(url, {
@@ -136,7 +136,7 @@ export async function getCostOfGeneration(
 ): Promise<CostApiResponse> {
   try {
     const baseUrl =
-      process.env.NEXT_PUBLIC_API_DEV_URL ?? "https://api..com";
+      process.env.NEXT_PUBLIC_API_DEV_URL ?? process.env.NEXT_PUBLIC_API_PROD_URL;
     console.log("Making request to:", `${baseUrl}/generate/cost`);
     
     const url = new URL(`${baseUrl}/generate/cost`);

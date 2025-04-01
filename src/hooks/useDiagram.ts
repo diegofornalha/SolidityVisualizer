@@ -64,7 +64,7 @@ export function useDiagram(username: string, repo: string) {
 
       try {
         const baseUrl =
-          process.env.NEXT_PUBLIC_API_DEV_URL ?? "https://api.solidityVisualizer.com";
+          process.env.NEXT_PUBLIC_API_DEV_URL ?? process.env.NEXT_PUBLIC_API_PROD_URL;
         const response = await fetch(`${baseUrl}/generate/stream`, {
           method: "POST",
           headers: {
@@ -230,7 +230,14 @@ export function useDiagram(username: string, repo: string) {
   );
 
   useEffect(() => {
+    console.log('State changed:', { status: state.status, hasDiagram: !!state.diagram });
     if (state.status === "complete" && state.diagram) {
+      console.log('Attempting to cache diagram...', {
+        username,
+        repo,
+        diagramLength: state.diagram.length,
+        explanationLength: state.explanation?.length
+      });
       // Cache the completed diagram with the usedOwnKey flag
       const hasApiKey = !!localStorage.getItem("openai_key");
       void cacheDiagramAndExplanation(
@@ -239,7 +246,9 @@ export function useDiagram(username: string, repo: string) {
         state.diagram,
         state.explanation ?? "No explanation provided",
         hasApiKey,
-      );
+      ).catch(error => {
+        console.error('Error in caching effect:', error);
+      });
       setDiagram(state.diagram);
       void getLastGeneratedDate(username, repo).then((date) =>
         setLastGenerated(date ?? undefined),

@@ -166,11 +166,10 @@ export default function MainCard({
                 <p className="mt-4 mb-2">A GitHub Personal Access Token (PAT) is required to access repositories.</p>
                 <Button
                   type="button"
-                  onClick={() => router.push('/?openPrivateRepos=true')}
                   className="text-sm font-medium text-primary hover:text-primary/80"
                   variant="link"
                 >
-                  Click here to set your GitHub PAT
+                  Click on &quot;GitHub PAT&quot; in the header to set your GitHub PAT
                 </Button>
               </>
             )}

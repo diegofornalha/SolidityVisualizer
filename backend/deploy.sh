@@ -3,8 +3,8 @@
 # Exit on any error
 set -e
 
-# Navigate to project directory
-cd ~/solidityVisualizer
+# Navigate to project directory (one level up from backend)
+cd ..
 
 # Pull latest changes
 git pull origin main

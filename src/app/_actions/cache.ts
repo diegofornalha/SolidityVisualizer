@@ -5,8 +5,23 @@ import { eq, and } from "drizzle-orm";
 import { diagramCache } from "~/server/db/schema";
 import { sql } from "drizzle-orm";
 
-export async function getCachedDiagram(username: string, repo: string) {
+export async function testDatabaseConnection() {
+  'use server';
   try {
+    console.log('SERVER: Testing database connection...');
+    const result = await db.execute(sql`SELECT 1 as test`);
+    console.log('SERVER: Database connection successful:', result);
+    return true;
+  } catch (error) {
+    console.error('SERVER: Database connection failed:', error);
+    return false;
+  }
+}
+
+export async function getCachedDiagram(username: string, repo: string) {
+  'use server';
+  try {
+    console.log('SERVER: Fetching cached diagram for:', { username, repo });
     const cached = await db
       .select()
       .from(diagramCache)
@@ -17,7 +32,7 @@ export async function getCachedDiagram(username: string, repo: string) {
 
     return cached[0]?.diagram ?? null;
   } catch (error) {
-    console.error("Error fetching cached diagram:", error);
+    console.error('SERVER: Error fetching cached diagram:', error);
     return null;
   }
 }
@@ -46,7 +61,22 @@ export async function cacheDiagramAndExplanation(
   explanation: string,
   usedOwnKey = false,
 ) {
+  'use server';
+  console.log('SERVER: Starting cache operation');
   try {
+    console.log('SERVER: Attempting to cache diagram:', { 
+      username, 
+      repo, 
+      usedOwnKey,
+      diagramLength: diagram.length,
+      explanationLength: explanation.length
+    });
+
+    const isConnected = await testDatabaseConnection();
+    if (!isConnected) {
+      throw new Error('Database connection failed');
+    }
+
     await db
       .insert(diagramCache)
       .values({
@@ -65,8 +95,12 @@ export async function cacheDiagramAndExplanation(
           updatedAt: new Date(),
         },
       });
+    console.log('SERVER: Successfully cached diagram');
+    return true;
   } catch (error) {
-    console.error("Error caching diagram:", error);
+    console.error('SERVER: Error caching diagram:', error);
+    console.error('SERVER: Database URL:', process.env.POSTGRES_URL?.replace(/:[^:@]*@/, ':****@'));
+    throw error;
   }
 }
 
@@ -86,3 +120,7 @@ export async function getDiagramStats() {
     return null;
   }
 }
+
+// Test database connection on module load
+console.log('SERVER: Testing database connection on module load');
+void testDatabaseConnection();
