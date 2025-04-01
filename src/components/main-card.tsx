@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import { Card } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Key } from "lucide-react";
 import React from "react";
 import { CustomizationDropdown } from "./customization-dropdown";
 import { exampleRepos } from "~/lib/exampleRepos";
 import { ExportDropdown } from "./export-dropdown";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { Switch } from "~/components/ui/switch";
+import { ApiKeyDialog } from "./api-key-dialog";
 
 interface MainCardProps {
   isHome?: boolean;
@@ -47,6 +48,9 @@ export default function MainCard({
   const [activeDropdown, setActiveDropdown] = useState<
     "customize" | "export" | null
   >(null);
+  const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
+  const [hasApiKey, setHasApiKey] = useState(false);
+  const [hasGitHubPAT, setHasGitHubPAT] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -61,9 +65,26 @@ export default function MainCard({
     }
   }, [loading]);
 
+  useEffect(() => {
+    const storedKey = localStorage.getItem("openai_key");
+    const storedPAT = localStorage.getItem("github_pat");
+    setHasApiKey(!!storedKey);
+    setHasGitHubPAT(!!storedPAT);
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (!hasApiKey) {
+      setShowApiKeyDialog(true);
+      return;
+    }
+
+    if (!hasGitHubPAT) {
+      router.push('/?openPrivateRepos=true');
+      return;
+    }
 
     const githubUrlPattern =
       /^https?:\/\/github\.com\/([a-zA-Z0-9-_]+)\/([a-zA-Z0-9-_\.]+)\/?$/;
@@ -82,6 +103,12 @@ export default function MainCard({
     const sanitizedUsername = encodeURIComponent(username);
     const sanitizedRepo = encodeURIComponent(repo);
     router.push(`/${sanitizedUsername}/${sanitizedRepo}`);
+  };
+
+  const handleApiKeySubmit = (apiKey: string) => {
+    localStorage.setItem("openai_key", apiKey);
+    setHasApiKey(true);
+    setShowApiKeyDialog(false);
   };
 
   const handleExampleClick = (repoPath: string, e: React.MouseEvent) => {
@@ -106,11 +133,48 @@ export default function MainCard({
           />
           <Button
             type="submit"
-            className="gradient-hover rounded-md border-0 p-4 px-4 text-base font-semibold text-primary-foreground shadow-md transition-all hover:shadow-lg sm:p-6 sm:px-6 sm:text-lg"
+            className={`gradient-hover rounded-md border-0 p-4 px-4 text-base font-semibold text-primary-foreground shadow-md transition-all hover:shadow-lg sm:p-6 sm:px-6 sm:text-lg ${(!hasApiKey || !hasGitHubPAT) ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!hasApiKey || !hasGitHubPAT}
           >
-            Diagram
+            {hasApiKey && hasGitHubPAT ? 'Visualize' : (
+              <>
+                <Key className="mr-2 h-5 w-5" />
+                {!hasApiKey && !hasGitHubPAT ? 'Set API Keys' : (!hasApiKey ? 'Set API Key' : 'Set GitHub PAT')}
+              </>
+            )}
           </Button>
         </div>
+
+        {(!hasApiKey || !hasGitHubPAT) && (
+          <div className="text-sm text-primary">
+            {!hasApiKey && (
+              <>
+                <p className="mb-2">An OpenAI API key is required to generate diagrams for your own repositories. The diagrams will be generated using your API key and billed to your OpenAI account.</p>
+                <Button
+                  type="button"
+                  onClick={() => setShowApiKeyDialog(true)}
+                  className="text-sm font-medium text-primary hover:text-primary/80"
+                  variant="link"
+                >
+                  Click here to set your API key
+                </Button>
+              </>
+            )}
+            
+            {!hasGitHubPAT && (
+              <>
+                <p className="mt-4 mb-2">A GitHub Personal Access Token (PAT) is required to access repositories.</p>
+                <Button
+                  type="button"
+                  className="text-sm font-medium text-primary hover:text-primary/80"
+                  variant="link"
+                >
+                  Click on &quot;GitHub PAT&quot; in the header to set your GitHub PAT
+                </Button>
+              </>
+            )}
+          </div>
+        )}
 
         {error && <p className="text-sm text-destructive">{error}</p>}
 
@@ -195,6 +259,7 @@ export default function MainCard({
                       onRegenerate={onRegenerate!}
                       lastGenerated={lastGenerated!}
                       isOpen={true}
+                      loading={loading}
                     />
                   )}
                   {activeDropdown === "export" && (
@@ -203,6 +268,7 @@ export default function MainCard({
                       lastGenerated={lastGenerated!}
                       onExportImage={onExportImage!}
                       isOpen={true}
+                      loading={loading}
                     />
                   )}
                 </div>
@@ -232,6 +298,12 @@ export default function MainCard({
           </div>
         )}
       </form>
+
+      <ApiKeyDialog
+        isOpen={showApiKeyDialog}
+        onClose={() => setShowApiKeyDialog(false)}
+        onSubmit={handleApiKeySubmit}
+      />
 
       {/* Decorative Sparkle */}
       <div className="absolute -bottom-8 -left-12 hidden sm:block">

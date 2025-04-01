@@ -31,7 +31,7 @@ export async function generateAndCacheDiagram(
 ): Promise<GenerateApiResponse> {
   try {
     const baseUrl =
-      process.env.NEXT_PUBLIC_API_DEV_URL ?? "https://api..com";
+      process.env.NEXT_PUBLIC_API_DEV_URL ?? process.env.NEXT_PUBLIC_API_PROD_URL;
     const url = new URL(`${baseUrl}/generate`);
 
     const response = await fetch(url, {
@@ -87,7 +87,7 @@ export async function modifyAndCacheDiagram(
     }
 
     const baseUrl =
-      process.env.NEXT_PUBLIC_API_DEV_URL ?? "https://api..com";
+      process.env.NEXT_PUBLIC_API_DEV_URL ?? process.env.NEXT_PUBLIC_API_PROD_URL;
     const url = new URL(`${baseUrl}/modify`);
 
     const response = await fetch(url, {
@@ -136,7 +136,9 @@ export async function getCostOfGeneration(
 ): Promise<CostApiResponse> {
   try {
     const baseUrl =
-      process.env.NEXT_PUBLIC_API_DEV_URL ?? "https://api..com";
+      process.env.NEXT_PUBLIC_API_DEV_URL ?? process.env.NEXT_PUBLIC_API_PROD_URL;
+    console.log("Making request to:", `${baseUrl}/generate/cost`);
+    
     const url = new URL(`${baseUrl}/generate/cost`);
 
     const response = await fetch(url, {
@@ -152,15 +154,24 @@ export async function getCostOfGeneration(
       }),
     });
 
+    console.log("Response status:", response.status);
+    
     if (response.status === 429) {
       return { error: "Rate limit exceeded. Please try again later." };
     }
 
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Full error response:", errorText);
+      return { error: `Server error: ${response.status} - ${errorText}` };
+    }
+
     const data = (await response.json()) as CostApiResponse;
+    console.log("Response data:", data);
 
     return { cost: data.cost, error: data.error };
   } catch (error) {
-    console.error("Error getting generation cost:", error);
-    return { error: "Failed to get cost estimate." };
+    console.error("Detailed error:", error);
+    return { error: `Failed to get cost estimate: ${error instanceof Error ? error.message : String(error)}` };
   }
 }

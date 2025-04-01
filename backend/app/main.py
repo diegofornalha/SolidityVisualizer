@@ -13,7 +13,10 @@ import os
 app = FastAPI()
 
 
-origins = ["http://localhost:3000", "https://solidityVisualizer.com"]
+origins = [
+    "https://solidityvisualizer.com",
+    "http://solidityvisualizer.com"
+]
 
 app.add_middleware(
     CORSMiddleware,

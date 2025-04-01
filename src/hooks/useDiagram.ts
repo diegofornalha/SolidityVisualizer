@@ -64,7 +64,7 @@ export function useDiagram(username: string, repo: string) {
 
       try {
         const baseUrl =
-          process.env.NEXT_PUBLIC_API_DEV_URL ?? "https://api.solidityVisualizer.com";
+          process.env.NEXT_PUBLIC_API_DEV_URL ?? process.env.NEXT_PUBLIC_API_PROD_URL;
         const response = await fetch(`${baseUrl}/generate/stream`, {
           method: "POST",
           headers: {
@@ -230,7 +230,14 @@ export function useDiagram(username: string, repo: string) {
   );
 
   useEffect(() => {
+    console.log('State changed:', { status: state.status, hasDiagram: !!state.diagram });
     if (state.status === "complete" && state.diagram) {
+      console.log('Attempting to cache diagram...', {
+        username,
+        repo,
+        diagramLength: state.diagram.length,
+        explanationLength: state.explanation?.length
+      });
       // Cache the completed diagram with the usedOwnKey flag
       const hasApiKey = !!localStorage.getItem("openai_key");
       void cacheDiagramAndExplanation(
@@ -239,7 +246,9 @@ export function useDiagram(username: string, repo: string) {
         state.diagram,
         state.explanation ?? "No explanation provided",
         hasApiKey,
-      );
+      ).catch(error => {
+        console.error('Error in caching effect:', error);
+      });
       setDiagram(state.diagram);
       void getLastGeneratedDate(username, repo).then((date) =>
         setLastGenerated(date ?? undefined),
@@ -266,16 +275,16 @@ export function useDiagram(username: string, repo: string) {
         return;
       }
 
-      // TEMP: LET USERS HAVE INFINITE GENERATIONS
-      // Only check for API key if we need to generate a new diagram
-      // const storedApiKey = localStorage.getItem("openai_key");
-      // if (hasUsedFreeGeneration && !storedApiKey) {
-      //   setError(
-      //     "You've used your one free diagram. Please enter your API key to continue. As a student, I can't afford to keep it totally free and I hope you understand :)",
-      //   );
-      //   setState({ status: "error", error: "API key required" });
-      //   return;
-      // }
+      // Check for API key before proceeding
+      const storedApiKey = localStorage.getItem("openai_key");
+      if (!storedApiKey) {
+        setError(
+          "An OpenAI API key is required to generate diagrams. Please provide your API key to continue.",
+        );
+        setState({ status: "error", error: "API key required" });
+        setLoading(false);
+        return;
+      }
 
       // Get cost estimate
       const costEstimate = await getCostOfGeneration(
@@ -330,6 +339,18 @@ export function useDiagram(username: string, repo: string) {
     setError("");
     setCost("");
     try {
+      const storedApiKey = localStorage.getItem("openai_key");
+
+      // Check for API key before proceeding
+      if (!storedApiKey) {
+        setError(
+          "An OpenAI API key is required to generate diagrams. Please provide your API key to continue.",
+        );
+        setState({ status: "error", error: "API key required" });
+        setLoading(false);
+        return;
+      }
+
       // Start streaming generation with instructions
       await generateDiagram(instructions);
     } catch (error) {
@@ -351,18 +372,17 @@ export function useDiagram(username: string, repo: string) {
     setCost("");
     try {
       const github_pat = localStorage.getItem("github_pat");
+      const storedApiKey = localStorage.getItem("openai_key");
 
-      // TEMP: LET USERS HAVE INFINITE GENERATIONS
-      // const storedApiKey = localStorage.getItem("openai_key");
-
-      // Check if user has used their free generation and doesn't have an API key
-      // if (hasUsedFreeGeneration && !storedApiKey) {
-      //   setError(
-      //     "You've used your one free diagram. Please enter your API key to continue. As a student, I can't afford to keep it totally free and I hope you understand :)",
-      //   );
-      //   setLoading(false);
-      //   return;
-      // }
+      // Check for API key before proceeding
+      if (!storedApiKey) {
+        setError(
+          "An OpenAI API key is required to generate diagrams. Please provide your API key to continue.",
+        );
+        setState({ status: "error", error: "API key required" });
+        setLoading(false);
+        return;
+      }
 
       const costEstimate = await getCostOfGeneration(username, repo, "");
 

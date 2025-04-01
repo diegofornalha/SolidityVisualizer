@@ -21,6 +21,8 @@ Visualize any Solidity project.
 
 This project was created to help Solidity developers explore and understand Blockchain projects faster and better, personally I have been in the position where I need to understand a new project but quickly realized the codebase is too massive for me to dig through manually, not to mention that Solidity smart contracts are not always the easiest to understand.
 
+Please follow the instructions to run this locally, this is a demo app and it is not deployed anyhwere yet.
+
 ## 🔒 How to diagram private repositories
 
 You can simply click on "Private Repos" in the header and follow the instructions by providing a GitHub personal access token with the `repo` scope.
@@ -53,7 +55,7 @@ Then edit the `.env` file with your Anthropic API key and optional GitHub person
 4. Run backend
 
 ```bash
-docker-compose up --build -d
+docker compose up --build -d
 ```
 
 Logs available at `docker-compose logs -f`
@@ -93,21 +95,22 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 Shoutout to [Romain Courtois](https://github.com/cyclotruc)'s [Gitingest](https://gitingest.com/) for inspiration and styling
 
-## 📈 Rate Limits
+## Support the Project
 
-I am currently hosting it for free with no rate limits though this is somewhat likely to change in the future.
+Solidity Visualizer is an open-source tool. If you find it useful for your work, consider supporting the ongoing development.
 
-<!-- If you would like to bypass these, self-hosting instructions are provided. I also plan on adding an input for your own Anthropic API key.
+### Buy Me a Coffee
 
-Diagram generation:
+<a href='https://ko-fi.com/vgabriel45'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi5.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
-- 1 request per minute
-- 5 requests per day -->
+### Crypto Donations
+`0x373aa015cEeE5dca6740E5003433142894Bf5E0c`
 
-## 🤔 Future Steps
+### Other Ways to Support
 
-- Implement font-awesome icons in diagram
-- Implement an embedded feature like star-history.com but for diagrams. The diagram could also be updated progressively as commits are made.
-# SolidityVisualizer
-# SolidityVisualizer
-# SolidityVisualizer
+- ⭐ Star this repository
+- 🔀 Share with others who might find it useful
+- 🐛 Report bugs and suggest features
+- 💻 Contribute to the codebase
+
+Your support helps make Solidity Visualizer better for everyone in the blockchain community! Thank you!

@@ -8,12 +8,14 @@ interface CustomizationDropdownProps {
   onRegenerate: (instructions: string) => void;
   lastGenerated: Date;
   isOpen: boolean;
+  loading?: boolean;
 }
 
 export function CustomizationDropdown({
   onModify,
   onRegenerate,
   lastGenerated,
+  loading = false,
 }: CustomizationDropdownProps) {
   const [instructions, setInstructions] = useState("");
 
@@ -39,11 +41,13 @@ export function CustomizationDropdown({
             icon={Wand2}
             tooltipText="Modify existing diagram"
             disabled={!instructions.trim()}
+            loading={loading}
           />
           <ActionButton
             onClick={() => onRegenerate(instructions)}
             icon={RefreshCw}
             tooltipText="Regenerate with/without custom instructions"
+            loading={loading}
           />
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { Button } from "~/components/ui/button";
 import type { LucideIcon } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -13,6 +14,7 @@ interface ActionButtonProps {
   tooltipText: string;
   disabled?: boolean;
   text?: string;
+  loading?: boolean;
 }
 
 export function ActionButton({
@@ -21,6 +23,7 @@ export function ActionButton({
   tooltipText,
   disabled,
   text,
+  loading = false,
 }: ActionButtonProps) {
   return (
     <TooltipProvider>
@@ -29,13 +32,21 @@ export function ActionButton({
           <Button
             onClick={(e) => {
               e.preventDefault();
-              onClick();
+              if (!loading) {
+                onClick();
+              }
             }}
-            disabled={disabled}
-            className="border-[3px] border-black bg-green-400 p-4 px-4 text-base text-black shadow-[4px_4px_0_0_#000000] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 hover:transform hover:bg-green-400 sm:p-6 sm:px-6 sm:text-lg"
+            disabled={(disabled ?? false) || (loading ?? false)}
+            className="border-[3px] border-black bg-green-400 p-4 px-4 text-base text-black shadow-[4px_4px_0_0_#000000] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 hover:transform hover:bg-green-400 sm:p-6 sm:px-6 sm:text-lg relative"
           >
-            <Icon className="h-6 w-6" />
-            {text && <span className="text-sm">{text}</span>}
+            {loading ? (
+              <Loader2 className="h-6 w-6 animate-spin" />
+            ) : (
+              <>
+                <Icon className="h-6 w-6" />
+                {text && <span className="text-sm">{text}</span>}
+              </>
+            )}
           </Button>
         </TooltipTrigger>
         <TooltipContent>

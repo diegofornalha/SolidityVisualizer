@@ -8,7 +8,7 @@ import { CSPostHogProvider } from "./providers";
 import { Analytics } from "@vercel/analytics/react"
 
 export const metadata: Metadata = {
-  title: "Solidity Git Diagram",
+  title: "Solidity Visualizer",
   description:
     "Turn any Solidity smart contract repository into an interactive diagram for visualization in seconds.",
   metadataBase: new URL("https://solidityVisualizer.com"),

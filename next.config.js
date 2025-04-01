@@ -7,6 +7,11 @@ import "./src/env.js";
 /** @type {import("next").NextConfig} */
 const config = {
   reactStrictMode: false,
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb'
+    },
+  },
   async rewrites() {
     return [
       {

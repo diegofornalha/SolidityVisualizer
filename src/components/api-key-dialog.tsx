@@ -43,9 +43,8 @@ export function ApiKeyDialog({ isOpen, onClose, onSubmit }: ApiKeyDialogProps) {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="text-sm">
-            Solidity Visualizer offers infinite free diagram generations! You can also
-            provide an OpenAI API key to generate diagrams at your own cost. The
-            key will be stored locally in your browser.
+            Solidity Visualizer requires an OpenAI API key to generate diagrams.
+            The diagrams will be generated using your API key and billed to your OpenAI account.
             <br />
             <br />
             <span className="font-medium">Get your OpenAI API key </span>

@@ -166,9 +166,10 @@ async def generate_stream(request: Request, body: ApiRequest):
                 token_count = o3_service.count_tokens(combined_content)
                 logger.info(f"Total token count: {token_count}")
 
-                if 50000 < token_count < 195000 and not body.api_key:
-                    logger.warning(f"Token count ({token_count}) exceeds free tier limit")
-                    yield f"data: {json.dumps({'error': f'File tree and README combined exceeds token limit (50,000). Current size: {token_count} tokens. This GitHub repository is too large for my wallet, but you can continue by providing your own OpenAI API key.'})}\n\n"
+                # Require API key for all operations
+                if not body.api_key:
+                    logger.warning("No API key provided")
+                    yield f"data: {json.dumps({'error': 'An OpenAI API key is required to generate diagrams. Please provide your API key to continue.'})}\n\n"
                     return
                 elif token_count > 195000:
                     logger.warning(f"Token count ({token_count}) exceeds maximum limit")
