@@ -38,35 +38,35 @@ export function ApiKeyDialog({ isOpen, onClose, onSubmit }: ApiKeyDialogProps) {
       <DialogContent className="border-[3px] border-black bg-green-200 p-6 shadow-[8px_8px_0_0_#000000] sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-black">
-            Enter OpenAI API Key
+            Insira sua Chave de API OpenAI
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="text-sm">
-            Solidity Visualizer requires an OpenAI API key to generate diagrams.
-            The diagrams will be generated using your API key and billed to your OpenAI account.
+            O FlowAgents precisa de uma chave de API OpenAI para gerar diagramas.
+            Os diagramas serão gerados usando sua chave de API e cobrados em sua conta OpenAI.
             <br />
             <br />
-            <span className="font-medium">Get your OpenAI API key </span>
+            <span className="font-medium">Obtenha sua chave de API OpenAI </span>
             <Link
               href="https://platform.openai.com/api-keys"
               className="font-medium text-green-600 transition-colors duration-200 hover:text-green-500"
             >
-              here
+              aqui
             </Link>
             .
           </div>
           <details className="group text-sm [&>summary:focus-visible]:outline-none">
             <summary className="cursor-pointer font-medium text-green-700 hover:text-green-600">
-              Data storage disclaimer
+              Aviso sobre armazenamento de dados
             </summary>
             <div className="animate-accordion-down mt-2 space-y-2 overflow-hidden pl-2">
               <p>
-                Your API key will be stored locally in your browser and used
-                only for generating diagrams. You can also self-host this app by
-                following the instructions in the{" "}
+                Sua chave de API será armazenada localmente em seu navegador e usada
+                apenas para gerar diagramas. Você também pode hospedar este aplicativo
+                seguindo as instruções no{" "}
                 <Link
-                  href="https://github.com/VGabriel45/solidityVisualizer"
+                  href="https://github.com/diegofornalha/flowAgents"
                   className="text-green-600 transition-colors duration-200 hover:text-green-500"
                 >
                   README
@@ -89,7 +89,7 @@ export function ApiKeyDialog({ isOpen, onClose, onSubmit }: ApiKeyDialogProps) {
               onClick={handleClear}
               className="text-sm text-green-600 hover:text-green-500"
             >
-              Clear
+              Limpar
             </button>
             <div className="flex gap-3">
               <Button
@@ -97,14 +97,14 @@ export function ApiKeyDialog({ isOpen, onClose, onSubmit }: ApiKeyDialogProps) {
                 onClick={onClose}
                 className="border-[3px] border-black bg-gray-200 px-4 py-2 text-black shadow-[4px_4px_0_0_#000000] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-gray-300"
               >
-                Cancel
+                Cancelar
               </Button>
               <Button
                 type="submit"
                 disabled={!apiKey.startsWith("sk-")}
                 className="border-[3px] border-black bg-green-400 px-4 py-2 text-black shadow-[4px_4px_0_0_#000000] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-green-300 disabled:opacity-50"
               >
-                Save Key
+                Salvar Chave
               </Button>
             </div>
           </div>

@@ -4,8 +4,8 @@
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.solidityAnalyzer_diagram_cache": {
-      "name": "solidityAnalyzer_diagram_cache",
+    "public.agentsAnalyzer_diagram_cache": {
+      "name": "agentsAnalyzer_diagram_cache",
       "schema": "",
       "columns": {
         "username": {
@@ -57,8 +57,8 @@
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {
-        "solidityAnalyzer_diagram_cache_username_repo_pk": {
-          "name": "solidityAnalyzer_diagram_cache_username_repo_pk",
+        "agentsAnalyzer_diagram_cache_username_repo_pk": {
+          "name": "agentsAnalyzer_diagram_cache_username_repo_pk",
           "columns": [
             "username",
             "repo"

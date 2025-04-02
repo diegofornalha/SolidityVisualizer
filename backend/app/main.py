@@ -14,8 +14,8 @@ app = FastAPI()
 
 
 origins = [
-    "https://solidityvisualizer.com",
-    "http://solidityvisualizer.com"
+    "https://flowagents.com",
+    "http://flowagents.com"
 ]
 
 app.add_middleware(
@@ -42,4 +42,4 @@ app.include_router(modify.router)
 @app.get("/")
 # @limiter.limit("100/day")
 async def root(request: Request):
-    return {"message": "Hello from Solidity Visualizer API!"}
+    return {"message": "Hello from FlowAgents API!"}

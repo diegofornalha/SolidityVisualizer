@@ -3,6 +3,7 @@ import {
   getCachedDiagram,
   getCachedExplanation,
 } from "~/app/_actions/cache";
+import { API_URL } from "~/config";
 
 interface GenerateApiResponse {
   error?: string;
@@ -174,4 +175,48 @@ export async function getCostOfGeneration(
     console.error("Detailed error:", error);
     return { error: `Failed to get cost estimate: ${error instanceof Error ? error.message : String(error)}` };
   }
+}
+
+export async function generateDiagram(
+  instructions: string,
+  openai_key: string,
+) {
+  const response = await fetch(`${API_URL}/generate`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      instructions,
+      openai_key,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to generate diagram");
+  }
+
+  return response.json();
+}
+
+export async function generateDiagramFromPrompt(
+  prompt: string,
+  openai_key: string,
+) {
+  const response = await fetch(`${API_URL}/generate-from-prompt`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      prompt,
+      openai_key,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Falha ao gerar o diagrama");
+  }
+
+  return response.json();
 }

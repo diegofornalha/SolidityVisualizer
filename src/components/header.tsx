@@ -4,12 +4,9 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { FaGithub } from "react-icons/fa";
 import { getStarCount } from "~/app/_actions/github";
-import { PrivateReposDialog } from "./private-repos-dialog";
 import { ApiKeyDialog } from "./api-key-dialog";
 
 export function Header() {
-  const [isPrivateReposDialogOpen, setIsPrivateReposDialogOpen] =
-    useState(false);
   const [isApiKeyDialogOpen, setIsApiKeyDialogOpen] = useState(false);
   const [starCount, setStarCount] = useState<number | null>(null);
 
@@ -18,17 +15,11 @@ export function Header() {
   }, []);
 
   const formatStarCount = (count: number | null) => {
-    if (!count) return "0"; // Default to 2.0k if count is null (it can only go up from here)
+    if (!count) return "0";
     if (count >= 1000) {
       return `${(count / 1000).toFixed(1)}k`;
     }
     return count.toString();
-  };
-
-  const handlePrivateReposSubmit = (pat: string) => {
-    // Store the PAT in localStorage
-    localStorage.setItem("github_pat", pat);
-    setIsPrivateReposDialogOpen(false);
   };
 
   const handleApiKeySubmit = (apiKey: string) => {
@@ -42,10 +33,10 @@ export function Header() {
         <Link href="/" className="flex items-center">
           <span className="text-lg font-semibold sm:text-xl">
             <span className="text-foreground transition-colors duration-200 hover:text-primary">
-              Solidity
+              Flow
             </span>
             <span className="text-primary transition-colors duration-200 hover:text-accent">
-              Visualizer
+              Agents
             </span>
           </span>
         </Link>
@@ -55,37 +46,21 @@ export function Header() {
             className="cursor-pointer text-sm font-medium text-foreground transition-transform hover:translate-y-[-2px] hover:text-primary"
           >
             <span className="flex items-center sm:hidden">
-              <span>API Key</span>
+              <span>Chave API</span>
             </span>
             <span className="hidden items-center gap-1 sm:flex">
-              <span>API Key</span>
+              <span>Chave API</span>
             </span>
           </span>
-          <span
-            onClick={() => setIsPrivateReposDialogOpen(true)}
-            className="cursor-pointer text-sm font-medium text-foreground transition-transform hover:translate-y-[-2px] hover:text-primary"
-          >
-            <span className="sm:hidden">GitHub PAT</span>
-            <span className="hidden sm:inline">GitHub PAT</span>
-          </span>
           <Link
-            href="https://github.com/VGabriel45/solidityVisualizer"
+            href="https://github.com/diegofornalha/flowagents"
             className="flex items-center gap-1 text-sm font-medium text-foreground transition-transform hover:translate-y-[-2px] hover:text-primary sm:gap-2"
           >
             <FaGithub className="h-5 w-5" />
             <span className="hidden sm:inline">GitHub</span>
           </Link>
-          <span className="flex items-center gap-1 text-sm font-medium text-foreground">
-            <span className="text-yellow-500 text-primary">★</span>
-            {formatStarCount(starCount)}
-          </span>
         </nav>
 
-        <PrivateReposDialog
-          isOpen={isPrivateReposDialogOpen}
-          onClose={() => setIsPrivateReposDialogOpen(false)}
-          onSubmit={handlePrivateReposSubmit}
-        />
         <ApiKeyDialog
           isOpen={isApiKeyDialogOpen}
           onClose={() => setIsApiKeyDialogOpen(false)}

@@ -1,12 +1,13 @@
-import { type Config } from "drizzle-kit";
+import type { Config } from "drizzle-kit";
+import * as dotenv from 'dotenv';
 
-import { env } from "~/env";
+dotenv.config();
 
 export default {
-  schema: "./src/server/db/schema.ts",
+  schema: "./src/db/schema.ts",
+  out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    url: env.POSTGRES_URL,
+    url: process.env.DATABASE_URL!,
   },
-  tablesFilter: ["solidityVisualizer_*"],
-} satisfies Config;
+} satisfies Config; 

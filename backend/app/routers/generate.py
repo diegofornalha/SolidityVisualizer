@@ -16,6 +16,7 @@ import re
 import json
 import asyncio
 import logging
+from app.services.openai_service import OpenAIService
 
 logger = logging.getLogger(__name__)
 
@@ -289,3 +290,18 @@ async def generate_stream(request: Request, body: ApiRequest):
     except Exception as e:
         logger.error(f"Error in generate stream endpoint: {str(e)}", exc_info=True)
         return {"error": str(e)}
+
+
+class GenerateFromPromptRequest(BaseModel):
+    prompt: str
+    openai_key: str
+
+
+@router.post("/generate-from-prompt")
+async def generate_from_prompt(body: GenerateFromPromptRequest):
+    try:
+        openai_service = OpenAIService(api_key=body.openai_key)
+        diagram = await openai_service.generate_diagram_from_prompt(body.prompt)
+        return {"diagram": diagram}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

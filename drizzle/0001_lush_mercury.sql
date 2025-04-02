@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS "solidityVisualizer_diagram_cache" (
+CREATE TABLE IF NOT EXISTS "flowAgents_diagram_cache" (
 	"username" varchar(256) NOT NULL,
 	"repo" varchar(256) NOT NULL,
 	"diagram" varchar(10000) NOT NULL,
@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS "solidityVisualizer_diagram_cache" (
 	"created_at" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	"updated_at" timestamp with time zone,
 	"used_own_key" boolean DEFAULT false,
-	CONSTRAINT "solidityVisualizer_diagram_cache_username_repo_pk" PRIMARY KEY("username","repo")
+	CONSTRAINT "flowAgents_diagram_cache_username_repo_pk" PRIMARY KEY("username","repo")
 );
 --> statement-breakpoint
-DROP TABLE "solidityAnalyzer_diagram_cache";
+DROP TABLE "agentsAnalyzer_diagram_cache";

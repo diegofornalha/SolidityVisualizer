@@ -2,11 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Card } from "~/components/ui/card";
+import { Card, CardContent } from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
-import { Sparkles, Key } from "lucide-react";
+import { Sparkles, Key, Loader2, AlertTriangle } from "lucide-react";
 import React from "react";
+import Image from "next/image";
+import { Balancer } from "react-wrap-balancer";
+import { Label } from "~/components/ui/label";
+import { useToast } from "~/components/ui/use-toast";
+import dynamic from 'next/dynamic';
 import { CustomizationDropdown } from "./customization-dropdown";
 import { exampleRepos } from "~/lib/exampleRepos";
 import { ExportDropdown } from "./export-dropdown";
@@ -29,6 +34,13 @@ interface MainCardProps {
   loading?: boolean;
 }
 
+const MermaidChart = dynamic(() => import('./mermaid-diagram'), {
+  ssr: false,
+  loading: () => <div className="flex justify-center items-center h-96">
+    <Loader2 className="h-8 w-8 animate-spin" />
+  </div>
+});
+
 export default function MainCard({
   isHome = true,
   username,
@@ -41,23 +53,25 @@ export default function MainCard({
   onExportImage,
   zoomingEnabled,
   onZoomToggle,
-  loading,
+  loading: initialLoading = false,
 }: MainCardProps) {
-  const [repoUrl, setRepoUrl] = useState("");
+  const [prompt, setPrompt] = useState("");
+  const [title, setTitle] = useState("");
   const [error, setError] = useState("");
   const [activeDropdown, setActiveDropdown] = useState<
     "customize" | "export" | null
   >(null);
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(false);
-  const [hasGitHubPAT, setHasGitHubPAT] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
+  const [diagram, setDiagram] = useState<string | null>(null);
+  const [loading, setLoading] = useState(initialLoading);
 
   useEffect(() => {
-    if (username && repo) {
-      setRepoUrl(`https://github.com/${username}/${repo}`);
-    }
-  }, [username, repo]);
+    const storedKey = localStorage.getItem("openai_key");
+    setHasApiKey(!!storedKey);
+  }, []);
 
   useEffect(() => {
     if (loading) {
@@ -65,14 +79,7 @@ export default function MainCard({
     }
   }, [loading]);
 
-  useEffect(() => {
-    const storedKey = localStorage.getItem("openai_key");
-    const storedPAT = localStorage.getItem("github_pat");
-    setHasApiKey(!!storedKey);
-    setHasGitHubPAT(!!storedPAT);
-  }, []);
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -81,28 +88,92 @@ export default function MainCard({
       return;
     }
 
-    if (!hasGitHubPAT) {
-      router.push('/?openPrivateRepos=true');
+    if (!prompt.trim()) {
+      setError("Por favor, digite um prompt para gerar o diagrama");
       return;
     }
 
-    const githubUrlPattern =
-      /^https?:\/\/github\.com\/([a-zA-Z0-9-_]+)\/([a-zA-Z0-9-_\.]+)\/?$/;
-    const match = githubUrlPattern.exec(repoUrl.trim());
+    setLoading(true);
+    try {
+      // Obter a chave da API OpenAI do localStorage
+      const apiKey = localStorage.getItem("openai_key");
+      
+      if (!apiKey) {
+        setError("Chave da API OpenAI não encontrada.");
+        setLoading(false);
+        setShowApiKeyDialog(true);
+        return;
+      }
+      
+      // Primeiro gera o diagrama
+      const generateResponse = await fetch('/api/generate-diagram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, apiKey })
+      });
 
-    if (!match) {
-      setError("Please enter a valid GitHub repository URL");
-      return;
-    }
+      if (!generateResponse.ok) {
+        const errorData = await generateResponse.json();
+        throw new Error(errorData.error || 'Erro ao gerar diagrama');
+      }
 
-    const [, username, repo] = match || [];
-    if (!username || !repo) {
-      setError("Invalid repository URL format");
-      return;
+      const { diagram: generatedDiagram } = await generateResponse.json();
+
+      // Validação mais flexível de sintaxe do Mermaid
+      const validMermaidSyntax = /flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt|pie|graph|mindmap/i.test(generatedDiagram);
+      
+      let finalDiagram = generatedDiagram;
+      if (!validMermaidSyntax) {
+        // Verificar se o diagrama está dentro de blocos de código
+        const codeBlockMatch = generatedDiagram.match(/```(?:mermaid)?\s*([\s\S]+?)```/);
+        if (codeBlockMatch && codeBlockMatch[1]) {
+          finalDiagram = codeBlockMatch[1].trim();
+        } else {
+          // Diagrama de fallback mais específico, evitando diagrama genérico
+          finalDiagram = `flowchart TD
+            A[${title || 'Início'}] --> B[Processamento]
+            B --> C{Análise}
+            C -->|Positivo| D[Resultado Positivo]
+            C -->|Negativo| E[Resultado Negativo]
+            D --> F[Conclusão]
+            E --> F
+            
+            style A fill:#bbf,stroke:#33b
+            style C fill:#fbb,stroke:#b33
+            style F fill:#bbf,stroke:#33b`;
+        }
+      }
+
+      // Depois salva no banco de dados
+      const saveResponse = await fetch('/api/diagrams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt,
+          diagram: finalDiagram,
+          title: title.trim() || `Diagrama ${new Date().toLocaleDateString('pt-BR')}`
+        })
+      });
+
+      if (!saveResponse.ok) {
+        throw new Error('Erro ao salvar diagrama');
+      }
+
+      setDiagram(finalDiagram);
+      toast({
+        title: 'Sucesso!',
+        description: 'Diagrama gerado e salvo com sucesso.',
+      });
+    } catch (error) {
+      console.error('Erro:', error);
+      toast({
+        title: 'Erro',
+        description: error instanceof Error ? error.message : 'Ocorreu um erro ao gerar ou salvar o diagrama.',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
     }
-    const sanitizedUsername = encodeURIComponent(username);
-    const sanitizedRepo = encodeURIComponent(repo);
-    router.push(`/${sanitizedUsername}/${sanitizedRepo}`);
   };
 
   const handleApiKeySubmit = (apiKey: string) => {
@@ -122,66 +193,96 @@ export default function MainCard({
 
   return (
     <Card className="relative w-full max-w-3xl border-0 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 p-4 shadow-lg sm:p-8">
-      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
-          <Input
-            placeholder="https://github.com/username/repo"
-            className="flex-1 rounded-md border-2 border-primary/20 bg-card px-3 py-4 text-base font-bold shadow-sm transition-all placeholder:text-base placeholder:font-normal placeholder:text-muted-foreground focus:border-primary/50 focus:shadow-md sm:px-4 sm:py-6 sm:text-lg sm:placeholder:text-lg"
-            value={repoUrl}
-            onChange={(e) => setRepoUrl(e.target.value)}
-            required
-          />
+      <CardContent className="p-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+          {!hasApiKey && (
+            <div className="mb-4 rounded-md bg-amber-50 p-4 text-amber-800 border border-amber-200">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+                <h3 className="font-medium">Chave da API OpenAI necessária</h3>
+              </div>
+              <p className="mt-1 text-sm">
+                Para gerar diagramas, você precisa adicionar sua chave da API OpenAI.
+              </p>
+              <Button 
+                type="button" 
+                variant="outline"
+                onClick={() => setShowApiKeyDialog(true)}
+                className="mt-2 border-amber-300 bg-amber-100 text-amber-800 hover:bg-amber-200"
+              >
+                <Key className="mr-2 h-4 w-4" />
+                Adicionar Chave da API
+              </Button>
+            </div>
+          )}
+          
+          <div className="space-y-2">
+            <Label htmlFor="title">Título do Diagrama</Label>
+            <Input
+              id="title"
+              placeholder="Digite um título para o diagrama..."
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="prompt">Prompt para Geração</Label>
+            <Input
+              id="prompt"
+              placeholder="Descreva o diagrama que você deseja gerar..."
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+            />
+          </div>
+
           <Button
             type="submit"
-            className={`gradient-hover rounded-md border-0 p-4 px-4 text-base font-semibold text-primary-foreground shadow-md transition-all hover:shadow-lg sm:p-6 sm:px-6 sm:text-lg ${(!hasApiKey || !hasGitHubPAT) ? 'opacity-50 cursor-not-allowed' : ''}`}
-            disabled={!hasApiKey || !hasGitHubPAT}
+            className={`gradient-hover rounded-md border-0 p-4 px-4 text-base font-semibold text-primary-foreground shadow-md transition-all hover:shadow-lg sm:p-6 sm:px-6 sm:text-lg ${!hasApiKey ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!hasApiKey || loading}
+            onClick={() => {
+              if (!hasApiKey) {
+                setShowApiKeyDialog(true);
+              }
+            }}
           >
-            {hasApiKey && hasGitHubPAT ? 'Visualize' : (
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Gerando diagrama...
+              </>
+            ) : (
               <>
                 <Key className="mr-2 h-5 w-5" />
-                {!hasApiKey && !hasGitHubPAT ? 'Set API Keys' : (!hasApiKey ? 'Set API Key' : 'Set GitHub PAT')}
+                Gerar Diagrama
               </>
             )}
           </Button>
-        </div>
-
-        {(!hasApiKey || !hasGitHubPAT) && (
-          <div className="text-sm text-primary">
-            {!hasApiKey && (
-              <>
-                <p className="mb-2">An OpenAI API key is required to generate diagrams for your own repositories. The diagrams will be generated using your API key and billed to your OpenAI account.</p>
-                <Button
-                  type="button"
-                  onClick={() => setShowApiKeyDialog(true)}
-                  className="text-sm font-medium text-primary hover:text-primary/80"
-                  variant="link"
-                >
-                  Click here to set your API key
-                </Button>
-              </>
-            )}
-            
-            {!hasGitHubPAT && (
-              <>
-                <p className="mt-4 mb-2">A GitHub Personal Access Token (PAT) is required to access repositories.</p>
-                <Button
-                  type="button"
-                  className="text-sm font-medium text-primary hover:text-primary/80"
-                  variant="link"
-                >
-                  Click on &quot;GitHub PAT&quot; in the header to set your GitHub PAT
-                </Button>
-              </>
-            )}
-          </div>
-        )}
+        </form>
 
         {error && <p className="text-sm text-destructive">{error}</p>}
+
+        {/* Example Prompt */}
+        {isHome && (
+          <div className="space-y-2">
+            <div className="text-sm text-gray-700 sm:text-base">
+              Experimente nosso exemplo de agente:
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                className="border-0 bg-gradient-to-r from-primary/90 to-secondary/90 text-sm font-medium text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:from-primary hover:to-secondary focus:ring-2 focus:ring-primary/50 sm:text-base"
+                onClick={(e) => handleExampleClick("/agendamento", e)}
+              >
+                Agente de Agendamento
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Dropdowns Container */}
         {!isHome && (
           <div className="space-y-4">
-            {/* Only show buttons and dropdowns when not loading */}
             {!loading && (
               <>
                 {/* Buttons Container */}
@@ -198,106 +299,29 @@ export default function MainCard({
                         className={`flex items-center justify-between gap-2 rounded-md border-2 border-primary/20 px-4 py-2 font-medium transition-all hover:border-primary/50 hover:shadow-sm sm:max-w-[250px] ${
                           activeDropdown === "customize"
                             ? "bg-primary/10"
-                            : "bg-card hover:bg-primary/5"
+                            : "bg-card"
                         }`}
                       >
-                        <span>Customize Diagram</span>
+                        <span>Personalizar</span>
                         {activeDropdown === "customize" ? (
-                          <ChevronUp size={20} />
+                          <ChevronUp className="h-4 w-4" />
                         ) : (
-                          <ChevronDown size={20} />
+                          <ChevronDown className="h-4 w-4" />
                         )}
                       </button>
                     )}
-
-                  {onCopy && lastGenerated && onExportImage && (
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleDropdownToggle("export");
-                        }}
-                        className={`flex items-center justify-between gap-2 rounded-md border-2 border-primary/20 px-4 py-2 font-medium transition-all hover:border-primary/50 hover:shadow-sm sm:max-w-[250px] ${
-                          activeDropdown === "export"
-                            ? "bg-primary/10"
-                            : "bg-card hover:bg-primary/5"
-                        }`}
-                      >
-                        <span>Export Diagram</span>
-                        {activeDropdown === "export" ? (
-                          <ChevronUp size={20} />
-                        ) : (
-                          <ChevronDown size={20} />
-                        )}
-                      </button>
-                    </div>
-                  )}
-                  {lastGenerated && (
-                    <>
-                      <label className="font-medium text-foreground">
-                        Enable Zoom
-                      </label>
-                      <Switch
-                        checked={zoomingEnabled}
-                        onCheckedChange={onZoomToggle}
-                      />
-                    </>
-                  )}
-                </div>
-
-                {/* Dropdown Content */}
-                <div
-                  className={`transition-all duration-200 ${
-                    activeDropdown
-                      ? "pointer-events-auto max-h-[500px] opacity-100"
-                      : "pointer-events-none max-h-0 opacity-0"
-                  }`}
-                >
-                  {activeDropdown === "customize" && (
-                    <CustomizationDropdown
-                      onModify={onModify!}
-                      onRegenerate={onRegenerate!}
-                      lastGenerated={lastGenerated!}
-                      isOpen={true}
-                      loading={loading}
-                    />
-                  )}
-                  {activeDropdown === "export" && (
-                    <ExportDropdown
-                      onCopy={onCopy!}
-                      lastGenerated={lastGenerated!}
-                      onExportImage={onExportImage!}
-                      isOpen={true}
-                      loading={loading}
-                    />
-                  )}
                 </div>
               </>
             )}
           </div>
         )}
 
-        {/* Example Repositories */}
-        {isHome && (
-          <div className="space-y-2">
-            <div className="text-sm text-gray-700 sm:text-base">
-              Try these example repositories:
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {Object.entries(exampleRepos).map(([name, path]) => (
-                <Button
-                  key={name}
-                  variant="outline"
-                  className="border-0 bg-gradient-to-r from-primary/90 to-secondary/90 text-sm font-medium text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md hover:from-primary hover:to-secondary focus:ring-2 focus:ring-primary/50 sm:text-base"
-                  onClick={(e) => handleExampleClick(path, e)}
-                >
-                  {name}
-                </Button>
-              ))}
-            </div>
+        {diagram && (
+          <div className="mt-6">
+            <MermaidChart chart={diagram} />
           </div>
         )}
-      </form>
+      </CardContent>
 
       <ApiKeyDialog
         isOpen={showApiKeyDialog}

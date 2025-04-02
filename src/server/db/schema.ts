@@ -16,7 +16,7 @@ import {
  *
  * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
  */
-export const createTable = pgTableCreator((name) => `solidityVisualizer_${name}`);
+export const createTable = pgTableCreator((name) => `flowagents_${name}`);
 
 export const diagramCache = createTable(
   "diagram_cache",

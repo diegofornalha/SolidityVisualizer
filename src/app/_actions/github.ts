@@ -7,7 +7,7 @@ interface GitHubResponse {
 export const getStarCount = cache(async () => {
   try {
     const response = await fetch(
-      "https://api.github.com/repos/VGabriel45/SolidityVisualizer",
+      "https://api.github.com/repos/diegofornalha/flowAgents",
       {
         headers: {
           Accept: "application/vnd.github.v3+json",
@@ -19,13 +19,14 @@ export const getStarCount = cache(async () => {
     );
 
     if (!response.ok) {
-      throw new Error("Failed to fetch star count");
+      console.warn("GitHub API returned non-200 status:", response.status);
+      return 0; // Retorna 0 em vez de lançar um erro
     }
 
     const data = (await response.json()) as GitHubResponse;
     return data.stargazers_count;
   } catch (error) {
-    console.error("Error fetching star count:", error);
-    return null;
+    console.warn("Error fetching star count:", error);
+    return 0; // Retorna 0 em caso de erro
   }
 });
