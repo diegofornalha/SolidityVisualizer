@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
@@ -16,6 +16,14 @@ export default function Home() {
   const [diagramCode, setDiagramCode] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  // Recuperar a API key do localStorage quando o componente carregar
+  useEffect(() => {
+    const savedApiKey = localStorage.getItem("openai_api_key");
+    if (savedApiKey) {
+      setApiKey(savedApiKey);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +47,9 @@ export default function Home() {
     }
     
     try {
+      // Salvar a API key no localStorage
+      localStorage.setItem("openai_api_key", apiKey);
+      
       setIsGenerating(true);
       setIsLoading(true);
       
@@ -61,7 +72,7 @@ export default function Home() {
       const data = await response.json();
       setDiagramCode(data.diagram);
       
-      // Salvar o diagrama no banco de dados
+      // Salvar o diagrama no banco de dados junto com a chave da API
       await fetch("/api/diagramas", {
         method: "POST",
         headers: {
@@ -70,6 +81,8 @@ export default function Home() {
         body: JSON.stringify({
           prompt,
           diagram: data.diagram,
+          apiKey: apiKey,
+          title: prompt.substring(0, 50) + (prompt.length > 50 ? "..." : ""),
         }),
       });
       
