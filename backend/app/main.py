@@ -1,45 +1,51 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from slowapi import _rate_limit_exceeded_handler
-from slowapi.errors import RateLimitExceeded
-from app.routers import generate, modify
-from app.core.limiter import limiter
-from typing import cast
-from starlette.exceptions import ExceptionMiddleware
-from api_analytics.fastapi import Analytics
+from app.routers import auth, generate, smart_contract
+from app.database import get_db
+from sqlalchemy.orm import Session
+from app.crud import get_user_by_email
+from fastapi.security import OAuth2PasswordBearer
 import os
-
 
 app = FastAPI()
 
-
+# Configuração de origens permitidas para CORS
 origins = [
-    "https://flowagents.com",
-    "http://flowagents.com"
+    "http://localhost:3000",
+    "https://solidityvisualizer.com",
+    "https://www.solidityvisualizer.com",
+    "https://solidityvisualizer.vercel.app",
+    "https://solidity-visualizer.vercel.app"
 ]
 
+# Adicionar middleware de CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
-API_ANALYTICS_KEY = os.getenv("API_ANALYTICS_KEY")
-if API_ANALYTICS_KEY:
-    app.add_middleware(Analytics, api_key=API_ANALYTICS_KEY)
-
-app.state.limiter = limiter
-app.add_exception_handler(
-    RateLimitExceeded, cast(ExceptionMiddleware, _rate_limit_exceeded_handler)
-)
-
-app.include_router(generate.router)
-app.include_router(modify.router)
-
+# Incluir rotas da API
+app.include_router(auth.router, prefix="/api")
+app.include_router(generate.router, prefix="/api")
+app.include_router(smart_contract.router, prefix="/api")
 
 @app.get("/")
-# @limiter.limit("100/day")
-async def root(request: Request):
-    return {"message": "Hello from FlowAgents API!"}
+def read_root():
+    return {"message": "SolidityVisualizer API está funcionando!", "docs": "/docs"}
+
+# Verificar se estamos em ambiente de desenvolvimento
+if os.environ.get("ENV") == "dev":
+    @app.get("/test-db")
+    def test_db(db: Session = Depends(get_db)):
+        try:
+            # Tentar fazer uma consulta simples
+            user = get_user_by_email(db, "test@example.com")
+            return {"message": "Conexão com o banco de dados funcionando!", "user_found": user is not None}
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erro ao conectar com o banco de dados: {str(e)}"
+            )

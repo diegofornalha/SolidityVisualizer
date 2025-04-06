@@ -1,115 +1,148 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Card, CardContent } from '~/components/ui/card';
-import { Loader2 } from 'lucide-react';
-import dynamic from 'next/dynamic';
-import { useToast } from '~/components/ui/use-toast';
-
-const MermaidChart = dynamic(() => import('~/components/mermaid-diagram'), {
-  ssr: false,
-  loading: () => <div className="flex justify-center items-center h-96">
-    <Loader2 className="h-8 w-8 animate-spin" />
-  </div>
-});
+import React, { useState, useEffect } from "react";
+import DiagramGenerator from "@/components/DiagramGenerator";
+import DiagramDisplay from "@/components/DiagramDisplay";
+import CodeDisplay from "@/components/CodeDisplay";
+import LoadingState from "@/components/LoadingState";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { saveToLocalStorage, getFromLocalStorage } from "@/lib/storage";
 
 export default function DiagramPage() {
-  const searchParams = useSearchParams();
-  const prompt = searchParams.get('prompt');
-  const [loading, setLoading] = useState(true);
-  const [diagram, setDiagram] = useState<string | null>(null);
-  const { toast } = useToast();
+  const [description, setDescription] = useState<string>("");
+  const [diagramCode, setDiagramCode] = useState<string>("");
+  const [solidityCode, setSolidityCode] = useState<string>("");
+  const [explanation, setExplanation] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string>("diagram");
+  const [error, setError] = useState<string>("");
 
   useEffect(() => {
-    const fetchOrGenerateDiagram = async () => {
-      if (!prompt) return;
+    // Carregar dados da sessão anterior do localStorage
+    const savedDescription = getFromLocalStorage("diagramDescription", "");
+    const savedDiagramCode = getFromLocalStorage("diagramCode", "");
+    const savedSolidityCode = getFromLocalStorage("solidityCode", "");
+    const savedExplanation = getFromLocalStorage("diagramExplanation", "");
 
-      try {
-        // Primeiro tenta buscar do banco de dados
-        const response = await fetch(`/api/diagrams/by-prompt?prompt=${encodeURIComponent(prompt)}`);
-        
-        if (response.ok) {
-          const data = await response.json();
-          if (data && data.diagram) {
-            setDiagram(data.diagram);
-            return;
-          }
-        }
+    setDescription(savedDescription);
+    setDiagramCode(savedDiagramCode);
+    setSolidityCode(savedSolidityCode);
+    setExplanation(savedExplanation);
+  }, []);
 
-        // Se não encontrou no banco, gera um novo
-        const generateResponse = await fetch('/api/generate-diagram', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt })
-        });
+  const handleGenerateDiagram = async (newDescription: string, style: string = "simple") => {
+    setLoading(true);
+    setError("");
+    setDescription(newDescription);
 
-        if (!generateResponse.ok) {
-          throw new Error('Erro ao gerar diagrama');
-        }
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const response = await fetch(`${apiUrl}/api/generate-diagram`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          description: newDescription,
+          style: style,
+        }),
+        credentials: "include",
+      });
 
-        const { diagram: generatedDiagram } = await generateResponse.json();
-
-        // Salva o novo diagrama no banco
-        await fetch('/api/diagrams', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            prompt,
-            diagram: generatedDiagram,
-            title: 'Diagrama gerado via URL'
-          })
-        });
-
-        setDiagram(generatedDiagram);
-      } catch (error) {
-        console.error('Erro:', error);
-        toast({
-          title: 'Erro',
-          description: 'Ocorreu um erro ao carregar ou gerar o diagrama.',
-          variant: 'destructive'
-        });
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Erro ao gerar o diagrama");
       }
-    };
 
-    fetchOrGenerateDiagram();
-  }, [prompt, toast]);
+      const data = await response.json();
+      setDiagramCode(data.diagram_code);
+      setSolidityCode(data.solidity_code);
+      setExplanation(data.explanation);
 
-  if (!prompt) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <p className="text-center text-muted-foreground">
-            Nenhum prompt fornecido. Por favor, adicione um prompt na URL.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+      // Salvar no localStorage
+      saveToLocalStorage("diagramDescription", newDescription);
+      saveToLocalStorage("diagramCode", data.diagram_code);
+      saveToLocalStorage("solidityCode", data.solidity_code);
+      saveToLocalStorage("diagramExplanation", data.explanation);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
+      setActiveTab("diagram");
+    } catch (err: any) {
+      console.error("Erro:", err);
+      setError(err.message || "Ocorreu um erro ao gerar o diagrama");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownloadDiagram = () => {
+    // Implementar download do diagrama como SVG ou PNG
+    // Isso precisará de uma biblioteca para renderizar o código mermaid como imagem
+    alert("Funcionalidade de download em desenvolvimento");
+  };
 
   return (
-    <div className="container mx-auto py-8">
-      <Card>
-        <CardContent className="p-6">
-          {diagram ? (
-            <MermaidChart chart={diagram} />
+    <main className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6 text-center">Gerador de Diagrama de Contrato Inteligente</h1>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1">
+          <DiagramGenerator
+            onGenerate={handleGenerateDiagram}
+            initialDescription={description}
+            isLoading={loading}
+          />
+          {error && <div className="mt-4 p-4 bg-red-100 text-red-800 rounded-md">{error}</div>}
+        </div>
+
+        <div className="lg:col-span-2">
+          {loading ? (
+            <LoadingState message="Gerando diagrama e código Solidity..." />
+          ) : diagramCode ? (
+            <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow">
+              <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="w-full">
+                  <TabsTrigger value="diagram" className="flex-1">
+                    Diagrama
+                  </TabsTrigger>
+                  <TabsTrigger value="code" className="flex-1">
+                    Código Solidity
+                  </TabsTrigger>
+                  <TabsTrigger value="explanation" className="flex-1">
+                    Explicação
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="diagram">
+                  <DiagramDisplay code={diagramCode} />
+                  <div className="mt-4 flex justify-end">
+                    <Button onClick={handleDownloadDiagram} className="ml-2">
+                      Baixar Diagrama
+                    </Button>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="code">
+                  <CodeDisplay code={solidityCode} language="solidity" />
+                </TabsContent>
+
+                <TabsContent value="explanation">
+                  <div className="prose dark:prose-invert max-w-none">
+                    <h3 className="text-xl font-semibold mb-2">Explicação do Contrato</h3>
+                    <div className="whitespace-pre-wrap">{explanation}</div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
           ) : (
-            <p className="text-center text-muted-foreground">
-              Não foi possível carregar o diagrama.
-            </p>
+            <div className="bg-slate-100 dark:bg-slate-800 p-8 rounded-lg text-center">
+              <p className="text-slate-600 dark:text-slate-400">
+                Insira uma descrição e clique em &quot;Gerar Diagrama&quot; para visualizar o resultado aqui.
+              </p>
+            </div>
           )}
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </div>
+    </main>
   );
-} 
+}
