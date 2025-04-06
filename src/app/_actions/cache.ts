@@ -1,19 +1,30 @@
 "use server";
 
-import { db } from "~/server/db";
-import { eq, and } from "drizzle-orm";
-import { diagramCache } from "~/server/db/schema";
-import { sql } from "drizzle-orm";
+// Versão simplificada sem banco de dados real
+// Para desenvolvimento/demonstração
+
+// Estrutura para o cache em memória
+interface DiagramCacheEntry {
+  username: string;
+  repo: string;
+  diagram: string;
+  explanation: string;
+  usedOwnKey: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Cache em memória para desenvolvimento
+let diagramCache: DiagramCacheEntry[] = [];
 
 export async function testDatabaseConnection() {
   'use server';
   try {
-    console.log('SERVER: Testing database connection...');
-    const result = await db.execute(sql`SELECT 1 as test`);
-    console.log('SERVER: Database connection successful:', result);
+    console.log('SERVER: Testing database connection simulation...');
+    // Simulação de uma conexão bem-sucedida
     return true;
   } catch (error) {
-    console.error('SERVER: Database connection failed:', error);
+    console.error('SERVER: Database connection simulation failed:', error);
     return false;
   }
 }
@@ -22,15 +33,10 @@ export async function getCachedDiagram(username: string, repo: string) {
   'use server';
   try {
     console.log('SERVER: Fetching cached diagram for:', { username, repo });
-    const cached = await db
-      .select()
-      .from(diagramCache)
-      .where(
-        and(eq(diagramCache.username, username), eq(diagramCache.repo, repo)),
-      )
-      .limit(1);
-
-    return cached[0]?.diagram ?? null;
+    const entry = diagramCache.find(
+      (entry) => entry.username === username && entry.repo === repo
+    );
+    return entry?.diagram ?? null;
   } catch (error) {
     console.error('SERVER: Error fetching cached diagram:', error);
     return null;
@@ -39,15 +45,10 @@ export async function getCachedDiagram(username: string, repo: string) {
 
 export async function getCachedExplanation(username: string, repo: string) {
   try {
-    const cached = await db
-      .select()
-      .from(diagramCache)
-      .where(
-        and(eq(diagramCache.username, username), eq(diagramCache.repo, repo)),
-      )
-      .limit(1);
-
-    return cached[0]?.explanation ?? null;
+    const entry = diagramCache.find(
+      (entry) => entry.username === username && entry.repo === repo
+    );
+    return entry?.explanation ?? null;
   } catch (error) {
     console.error("Error fetching cached explanation:", error);
     return null;
@@ -71,50 +72,55 @@ export async function cacheDiagramAndExplanation(
       diagramLength: diagram.length,
       explanationLength: explanation.length
     });
+    
+    // Verificar se a entrada já existe no cache
+    const existingIndex = diagramCache.findIndex(
+      (entry) => entry.username === username && entry.repo === repo
+    );
 
-    const isConnected = await testDatabaseConnection();
-    if (!isConnected) {
-      throw new Error('Database connection failed');
-    }
-
-    await db
-      .insert(diagramCache)
-      .values({
+    const now = new Date();
+    
+    // Se já existe, atualiza a entrada
+    if (existingIndex >= 0) {
+      diagramCache[existingIndex] = {
+        ...diagramCache[existingIndex],
+        diagram,
+        explanation,
+        usedOwnKey,
+        updatedAt: now
+      };
+    } else {
+      // Se não existe, cria uma nova entrada
+      diagramCache.push({
         username,
         repo,
         diagram,
         explanation,
         usedOwnKey,
-      })
-      .onConflictDoUpdate({
-        target: [diagramCache.username, diagramCache.repo],
-        set: {
-          diagram,
-          explanation,
-          usedOwnKey,
-          updatedAt: new Date(),
-        },
+        createdAt: now,
+        updatedAt: now
       });
+    }
+    
     console.log('SERVER: Successfully cached diagram');
     return true;
   } catch (error) {
     console.error('SERVER: Error caching diagram:', error);
-    console.error('SERVER: Database URL:', process.env.POSTGRES_URL?.replace(/:[^:@]*@/, ':****@'));
     throw error;
   }
 }
 
 export async function getDiagramStats() {
   try {
-    const stats = await db
-      .select({
-        totalDiagrams: sql`COUNT(*)`,
-        ownKeyUsers: sql`COUNT(CASE WHEN ${diagramCache.usedOwnKey} = true THEN 1 END)`,
-        freeUsers: sql`COUNT(CASE WHEN ${diagramCache.usedOwnKey} = false THEN 1 END)`,
-      })
-      .from(diagramCache);
-
-    return stats[0];
+    const totalDiagrams = diagramCache.length;
+    const ownKeyUsers = diagramCache.filter(entry => entry.usedOwnKey).length;
+    const freeUsers = diagramCache.filter(entry => !entry.usedOwnKey).length;
+    
+    return {
+      totalDiagrams,
+      ownKeyUsers,
+      freeUsers
+    };
   } catch (error) {
     console.error("Error getting diagram stats:", error);
     return null;
@@ -122,5 +128,5 @@ export async function getDiagramStats() {
 }
 
 // Test database connection on module load
-console.log('SERVER: Testing database connection on module load');
+console.log('SERVER: Testing database connection simulation on module load');
 void testDatabaseConnection();
