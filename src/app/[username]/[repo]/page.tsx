@@ -1,12 +1,12 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import MainCard from "~/components/main-card";
-import Loading from "~/components/loading";
-import MermaidChart from "~/components/mermaid-diagram";
-import { useDiagram } from "~/hooks/useDiagram";
-import { ApiKeyDialog } from "~/components/api-key-dialog";
-import { ApiKeyButton } from "~/components/api-key-button";
+import MainCard from "@/components/main-card";
+import Loading from "@/components/loading";
+import MermaidChart from "@/components/mermaid-diagram";
+import { useDiagram } from "@/hooks/useDiagram";
+import { ApiKeyDialog } from "@/components/api-key-dialog";
+import { ApiKeyButton } from "@/components/api-key-button";
 import { useState } from "react";
 
 export default function Repo() {
