@@ -1,90 +1,43 @@
-// Implementação simplificada sem Prisma
-import { User, SmartContract } from './types';
+// Implementação simplificada do banco de dados sem ORM
+// Esta implementação usa um array em memória como substituto para o banco de dados
 
-// Armazenamento em memória para desenvolvimento
-let users: User[] = [];
-let smartContracts: SmartContract[] = [];
+export const db = {
+  // Simula uma consulta select
+  select: () => ({
+    from: (table: any) => ({
+      where: (condition: any) => ({
+        limit: (n: number) => [],
+        orderBy: (field: any) => []
+      }),
+      orderBy: (field: any) => []
+    })
+  }),
 
-// Funções para interagir com usuários
-export async function getUserByEmail(email: string): Promise<User | null> {
-  return users.find(user => user.email === email) || null;
-}
+  // Simula uma inserção
+  insert: (table: any) => ({
+    values: (data: any) => ({
+      returning: () => [data]
+    })
+  }),
 
-export async function createUser(userData: {
-  email: string;
-  name: string;
-  hashedPassword: string;
-}): Promise<User> {
-  const newUser = {
-    id: generateId(),
-    ...userData,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  };
-  users.push(newUser);
-  return newUser;
-}
+  // Simula uma atualização
+  update: (table: any) => ({
+    set: (updates: any) => ({
+      where: (condition: any) => ({
+        returning: () => [{ ...updates }]
+      })
+    })
+  }),
 
-// Funções para interagir com contratos inteligentes
-export async function createSmartContract(contractData: {
-  title: string;
-  description: string;
-  solidity_code: string;
-  diagram_code: string;
-  userId: string;
-  additional_notes?: string;
-}): Promise<SmartContract> {
-  const newContract = {
-    id: generateId(),
-    ...contractData,
-    createdAt: new Date(),
-    updatedAt: new Date()
-  };
-  smartContracts.push(newContract);
-  return newContract;
-}
-
-export async function getSmartContractsByUser(userId: string): Promise<SmartContract[]> {
-  return smartContracts.filter(contract => contract.userId === userId);
-}
-
-export async function getSmartContractById(id: string): Promise<SmartContract | null> {
-  return smartContracts.find(contract => contract.id === id) || null;
-}
-
-export async function deleteSmartContract(id: string): Promise<SmartContract> {
-  const index = smartContracts.findIndex(contract => contract.id === id);
-  if (index === -1) throw new Error('Smart contract not found');
-  
-  const deleted = smartContracts[index];
-  smartContracts = smartContracts.filter(contract => contract.id !== id);
-  return deleted;
-}
-
-export async function updateSmartContract(
-  id: string,
-  data: {
-    title?: string;
-    description?: string;
-    solidity_code?: string;
-    diagram_code?: string;
-    additional_notes?: string;
-  }
-): Promise<SmartContract> {
-  const contract = await getSmartContractById(id);
-  if (!contract) throw new Error('Smart contract not found');
-  
-  const updated = {
-    ...contract,
-    ...data,
-    updatedAt: new Date()
-  };
-  
-  smartContracts = smartContracts.map(c => c.id === id ? updated : c);
-  return updated;
-}
+  // Simula uma exclusão
+  delete: (table: any) => ({
+    where: (condition: any) => ({
+      returning: () => [{}]
+    })
+  })
+};
 
 // Utilitário para gerar IDs únicos
-function generateId(): string {
+export function generateId(): string {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 }
