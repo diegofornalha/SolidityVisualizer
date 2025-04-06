@@ -7,9 +7,12 @@ import LoadingState from "@/components/LoadingState";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { saveToLocalStorage, getFromLocalStorage } from "@/lib/storage";
-import { AlertCircle, BookOpen, Code, Download, BookMarked } from "lucide-react";
+import { AlertCircle, BookOpen, Code, Download, BookMarked, Sparkles, Info, FileCode } from "lucide-react";
 
 export default function VisualizePage() {
   const [prompt, setPrompt] = useState<string>("");
@@ -18,7 +21,7 @@ export default function VisualizePage() {
   const [explanation, setExplanation] = useState<string>("");
   const [securityIssues, setSecurityIssues] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<string>("code");
+  const [activeTab, setActiveTab] = useState<string>("diagram");
   const [error, setError] = useState<string>("");
   const [diagramStyle, setDiagramStyle] = useState<string>("flowchart");
   const [includeSecurityAnalysis, setIncludeSecurityAnalysis] = useState<boolean>(true);
@@ -26,10 +29,16 @@ export default function VisualizePage() {
   useEffect(() => {
     // Carregar dados da sessão anterior do localStorage
     const savedCode = getFromLocalStorage("solidityCodeToAnalyze", "");
-    setSolidityCode(savedCode);
+    if (savedCode) setSolidityCode(savedCode);
     
     const savedPrompt = getFromLocalStorage("promptToAnalyze", "");
-    setPrompt(savedPrompt);
+    if (savedPrompt) setPrompt(savedPrompt);
+
+    const savedDiagram = getFromLocalStorage("savedDiagram", "");
+    if (savedDiagram) setDiagramCode(savedDiagram);
+
+    const savedExplanation = getFromLocalStorage("savedExplanation", "");
+    if (savedExplanation) setExplanation(savedExplanation);
   }, []);
 
   const handleGenerateDiagram = async () => {
@@ -67,14 +76,21 @@ export default function VisualizePage() {
       }
 
       const data = await response.json();
-      setDiagramCode(data.diagram_code || data.diagram);
-      setSolidityCode(data.solidity_code || "");
-      setExplanation(data.explanation || "");
+      const newDiagramCode = data.diagram_code || data.diagram;
+      const newSolidityCode = data.solidity_code || "";
+      const newExplanation = data.explanation || "";
+      
+      setDiagramCode(newDiagramCode);
+      setSolidityCode(newSolidityCode);
+      setExplanation(newExplanation);
 
       // Salvar no localStorage
       saveToLocalStorage("promptToAnalyze", prompt);
-      if (data.solidity_code) {
-        saveToLocalStorage("solidityCodeToAnalyze", data.solidity_code);
+      saveToLocalStorage("savedDiagram", newDiagramCode);
+      saveToLocalStorage("savedExplanation", newExplanation);
+      
+      if (newSolidityCode) {
+        saveToLocalStorage("solidityCodeToAnalyze", newSolidityCode);
       }
 
       setActiveTab("diagram");
@@ -88,7 +104,7 @@ export default function VisualizePage() {
           },
           body: JSON.stringify({
             prompt,
-            diagram: data.diagram_code || data.diagram,
+            diagram: newDiagramCode,
             title: prompt.substring(0, 100)
           }),
         });
@@ -104,8 +120,8 @@ export default function VisualizePage() {
     }
   };
 
-  const handleDiagramStyleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setDiagramStyle(e.target.value);
+  const handleDiagramStyleChange = (value: string) => {
+    setDiagramStyle(value);
   };
 
   const handlePromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -121,17 +137,18 @@ export default function VisualizePage() {
     ];
 
     return (
-      <div className="mt-4">
-        <h3 className="text-sm font-medium mb-2">Exemplos de prompts:</h3>
+      <div className="space-y-3 mt-6">
+        <h3 className="text-sm font-medium">Exemplos de prompts:</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {examples.map((example, index) => (
-            <button
+            <Button
               key={index}
+              variant="outline"
               onClick={() => setPrompt(example)}
-              className="text-left p-2 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-colors"
+              className="h-auto py-2 justify-start text-left font-normal"
             >
               {example}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -139,44 +156,64 @@ export default function VisualizePage() {
   };
 
   return (
-    <main className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6 text-center">Visualizador de Contrato Inteligente</h1>
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="flex flex-col items-center mb-10 text-center">
+        <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+          Visualizador de Contrato Inteligente
+        </h1>
+        <p className="text-muted-foreground mt-2 max-w-2xl">
+          Descreva seu contrato inteligente em linguagem natural e receba um diagrama visual, código e explicação detalhada.
+        </p>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Gerar Diagrama</CardTitle>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-5 space-y-6">
+          <Card className="shadow-sm border-border hover:border-primary/20 transition-all duration-300">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center">
+                <Sparkles className="mr-2 h-5 w-5 text-primary" /> Gerar Diagrama
+              </CardTitle>
+              <CardDescription>
+                Descreva o contrato que você deseja visualizar em detalhes
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="mb-4">
-                <label htmlFor="prompt" className="block text-sm font-medium mb-2">
-                  Descreva o contrato que deseja visualizar
-                </label>
+            
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
                 <Textarea
-                  id="prompt"
                   value={prompt}
                   onChange={handlePromptChange}
-                  className="h-60"
+                  className="h-60 resize-none focus-visible:ring-primary"
                   placeholder="Descreva o tipo de contrato que deseja visualizar. Por exemplo: 'Um contrato ERC20 com funções de mint e burn'..."
                 />
               </div>
 
-              <div className="mb-4">
-                <label htmlFor="diagram-style" className="block text-sm font-medium mb-2">
-                  Estilo do Diagrama
-                </label>
-                <select
-                  id="diagram-style"
-                  value={diagramStyle}
-                  onChange={handleDiagramStyleChange}
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600"
-                >
-                  <option value="flowchart">Fluxograma</option>
-                  <option value="sequenceDiagram">Diagrama de Sequência</option>
-                  <option value="classDiagram">Diagrama de Classes</option>
-                  <option value="erDiagram">Diagrama ER</option>
-                </select>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Estilo do Diagrama</label>
+                <Select value={diagramStyle} onValueChange={handleDiagramStyleChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o estilo do diagrama" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="flowchart">Fluxograma</SelectItem>
+                    <SelectItem value="sequenceDiagram">Diagrama de Sequência</SelectItem>
+                    <SelectItem value="classDiagram">Diagrama de Classes</SelectItem>
+                    <SelectItem value="erDiagram">Diagrama ER</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex items-center text-xs text-muted-foreground mt-1 cursor-help">
+                        <Info className="h-3 w-3 mr-1" /> Escolha o estilo que melhor representa seu contrato
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="max-w-xs">Fluxogramas são bons para lógica, diagramas de classe para estrutura, e diagramas de sequência para interações entre componentes.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
 
               {renderExamplePrompts()}
@@ -184,31 +221,35 @@ export default function VisualizePage() {
               <Button 
                 onClick={handleGenerateDiagram} 
                 disabled={loading} 
-                className="w-full mt-4 gradient-hover"
+                className="w-full mt-2 gradient-hover"
+                size="lg"
               >
                 {loading ? "Gerando..." : "Gerar Diagrama"}
               </Button>
 
               {error && (
-                <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-200 rounded-md flex items-start">
-                  <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
-                  <p>{error}</p>
-                </div>
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Erro</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
               )}
             </CardContent>
           </Card>
         </div>
 
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-7 space-y-6">
           {loading ? (
-            <LoadingState message="Gerando diagrama com base na sua descrição..." />
+            <Card className="h-full flex items-center justify-center min-h-[500px]">
+              <LoadingState message="Gerando diagrama com base na sua descrição..." />
+            </Card>
           ) : diagramCode ? (
-            <Card>
-              <CardHeader className="pb-2">
+            <Card className="shadow-sm border-border overflow-hidden">
+              <CardHeader className="pb-0 border-b">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                   <TabsList className="w-full grid grid-cols-3">
                     <TabsTrigger value="diagram" className="flex items-center">
-                      <Code className="h-4 w-4 mr-2" /> Diagrama
+                      <FileCode className="h-4 w-4 mr-2" /> Diagrama
                     </TabsTrigger>
                     <TabsTrigger value="code" className="flex items-center">
                       <Code className="h-4 w-4 mr-2" /> Código
@@ -220,12 +261,12 @@ export default function VisualizePage() {
                 </Tabs>
               </CardHeader>
 
-              <CardContent>
-                <TabsContent value="diagram" className="mt-4">
-                  <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+              <CardContent className="p-0">
+                <TabsContent value="diagram" className="m-0 p-0">
+                  <div className="p-6 bg-card">
                     <DiagramDisplay code={diagramCode} />
                   </div>
-                  <div className="mt-4 flex justify-end">
+                  <div className="px-6 py-4 border-t bg-muted/20 flex justify-end">
                     <Button 
                       variant="outline" 
                       onClick={() => {
@@ -243,53 +284,75 @@ export default function VisualizePage() {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="code" className="mt-4">
+                <TabsContent value="code" className="m-0">
                   {solidityCode ? (
-                    <CodeDisplay code={solidityCode} language="solidity" />
+                    <div className="p-0">
+                      <CodeDisplay code={solidityCode} language="solidity" />
+                      <div className="px-6 py-4 border-t bg-muted/20 flex justify-end">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => {
+                            const element = document.createElement('a');
+                            const file = new Blob([solidityCode], {type: 'text/plain'});
+                            element.href = URL.createObjectURL(file);
+                            element.download = `contrato-${Date.now()}.sol`;
+                            document.body.appendChild(element);
+                            element.click();
+                          }}
+                          className="flex items-center"
+                        >
+                          <Download className="h-4 w-4 mr-2" /> Baixar Código
+                        </Button>
+                      </div>
+                    </div>
                   ) : (
-                    <div className="p-4 text-center bg-gray-50 dark:bg-gray-800 rounded-lg">
-                      <p>Nenhum código Solidity foi gerado para este diagrama.</p>
+                    <div className="p-6 text-center">
+                      <p className="text-muted-foreground">Nenhum código gerado para este contrato.</p>
                     </div>
                   )}
                 </TabsContent>
 
-                <TabsContent value="explanation" className="mt-4">
-                  <div className="prose dark:prose-invert max-w-none p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-                    {explanation ? (
-                      <div className="whitespace-pre-wrap">{explanation}</div>
-                    ) : (
-                      <p className="text-center">Nenhuma explicação disponível para este diagrama.</p>
-                    )}
-                  </div>
+                <TabsContent value="explanation" className="m-0 p-6">
+                  {explanation ? (
+                    <div className="prose prose-primary dark:prose-invert max-w-none">
+                      <div dangerouslySetInnerHTML={{ __html: explanation.replace(/\n/g, '<br />') }} />
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <p className="text-muted-foreground">Nenhuma explicação disponível para este contrato.</p>
+                    </div>
+                  )}
                 </TabsContent>
               </CardContent>
             </Card>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full p-8 bg-gray-50 dark:bg-gray-800 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
-              <BookMarked className="h-16 w-16 text-gray-400 mb-4" />
-              <h3 className="text-xl font-medium text-gray-700 dark:text-gray-300 mb-2">Nenhum diagrama gerado</h3>
-              <p className="text-gray-500 dark:text-gray-400 text-center max-w-md mb-4">
-                Descreva o contrato inteligente que deseja visualizar e clique em "Gerar Diagrama" para criar um diagrama visual.
-              </p>
-              <p className="text-sm text-gray-400 dark:text-gray-500 text-center max-w-md">
-                Use linguagem natural para descrever as funcionalidades, entidades e comportamentos do contrato.
-              </p>
-            </div>
+            <Card className="min-h-[500px] flex flex-col items-center justify-center border-dashed border-2 border-muted bg-muted/20">
+              <div className="max-w-md text-center p-8 space-y-4">
+                <h2 className="text-xl font-semibold">Nenhum diagrama gerado</h2>
+                <p className="text-muted-foreground">
+                  Descreva o contrato inteligente que deseja visualizar e clique em "Gerar Diagrama" para criar um diagrama visual.
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Use linguagem natural para descrever as funcionalidades, entidades e comportamentos do contrato.
+                </p>
+              </div>
+            </Card>
           )}
         </div>
       </div>
-      
-      <div className="mt-8">
-        <h2 className="text-2xl font-bold mb-4">Meus Diagramas Recentes</h2>
-        <div className="flex justify-end mb-4">
-          <Button 
-            variant="outline"
-            onClick={() => window.location.href = '/diagramas'}
-          >
-            Ver Todos os Diagramas
+
+      <div className="mt-12">
+        <h2 className="text-xl font-semibold mb-4">Meus Diagramas Recentes</h2>
+        <div className="flex justify-end">
+          <Button variant="outline" asChild>
+            <Link href="/diagramas">Ver Todos os Diagramas</Link>
           </Button>
         </div>
       </div>
-    </main>
+    </div>
   );
+}
+
+function Link({ href, children, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) {
+  return <a href={href} {...props}>{children}</a>;
 }
