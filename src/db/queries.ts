@@ -1,44 +1,72 @@
 import { db } from './index';
 import { diagrams } from './schema';
-import { eq } from 'drizzle-orm';
+
+// Simulação simplificada de consultas ao banco de dados
+// Esta implementação usa um array em memória como substituto para o banco de dados
+
+// Estado em memória para armazenar os diagramas
+if (typeof globalThis.diagramsData === 'undefined') {
+  globalThis.diagramsData = [];
+  globalThis.diagramsIdCounter = 1;
+}
 
 export async function saveDiagram(prompt: string, diagramCode: string, apiKey?: string, title?: string) {
-  return await db.insert(diagrams).values({
+  const id = globalThis.diagramsIdCounter++;
+  const now = new Date();
+  const newDiagram = {
+    id,
     prompt,
     diagram: diagramCode,
     apiKey,
-    title: title || 'Diagrama sem título'
-  }).returning();
+    title: title || 'Diagrama sem título',
+    createdAt: now,
+    updatedAt: now
+  };
+  
+  globalThis.diagramsData.push(newDiagram);
+  return [newDiagram];
 }
 
 export async function getDiagramById(id: number) {
-  const results = await db.select().from(diagrams).where(eq(diagrams.id, id));
-  return results[0];
+  return globalThis.diagramsData.find(d => d.id === id) || null;
 }
 
 export async function getDiagramByPrompt(prompt: string) {
-  const results = await db.select().from(diagrams).where(eq(diagrams.prompt, prompt));
-  return results[0];
+  return globalThis.diagramsData.find(d => d.prompt === prompt) || null;
 }
 
 export async function getAllDiagrams() {
-  return await db.select().from(diagrams).orderBy(diagrams.createdAt);
+  return [...globalThis.diagramsData].sort((a, b) => 
+    a.createdAt.getTime() - b.createdAt.getTime()
+  );
 }
 
 export async function getAllApiKeys() {
-  return await db.select({
-    id: diagrams.id,
-    apiKey: diagrams.apiKey
-  }).from(diagrams);
+  return globalThis.diagramsData.map(d => ({
+    id: d.id,
+    apiKey: d.apiKey
+  }));
 }
 
 export async function updateDiagram(id: number, updates: { prompt?: string; diagram?: string; title?: string; apiKey?: string }) {
-  return await db.update(diagrams)
-    .set({ ...updates, updatedAt: new Date() })
-    .where(eq(diagrams.id, id))
-    .returning();
+  const index = globalThis.diagramsData.findIndex(d => d.id === id);
+  if (index === -1) return null;
+  
+  globalThis.diagramsData[index] = {
+    ...globalThis.diagramsData[index],
+    ...updates,
+    updatedAt: new Date()
+  };
+  
+  return [globalThis.diagramsData[index]];
 }
 
 export async function deleteDiagram(id: number) {
-  return await db.delete(diagrams).where(eq(diagrams.id, id)).returning();
-} 
+  const index = globalThis.diagramsData.findIndex(d => d.id === id);
+  if (index === -1) return null;
+  
+  const deleted = globalThis.diagramsData[index];
+  globalThis.diagramsData = globalThis.diagramsData.filter(d => d.id !== id);
+  
+  return [deleted];
+}
