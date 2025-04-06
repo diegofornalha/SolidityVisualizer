@@ -1,31 +1,35 @@
-import * as schema from "./schema";
-import { drizzle as drizzleNeon } from "drizzle-orm/neon-http";
-import { drizzle as drizzlePostgres } from "drizzle-orm/postgres-js";
-import { neon } from "@neondatabase/serverless";
-import postgres from "postgres";
-import { config } from "dotenv";
-import type { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import type { NeonHttpDatabase } from "drizzle-orm/neon-http";
+// Implementação simplificada sem Drizzle ORM
+// Este arquivo fornece um substituto para as funções de banco de dados
+// que são usadas pela aplicação, mas sem depender de um banco de dados real
 
-config({ path: ".env" });
+// As estruturas de dados e funções estão dentro do objeto globalThis
+// para que possam ser acessadas de diferentes partes da aplicação
 
-// Define a type that can be either Neon or Postgres database
-type DrizzleDatabase =
-  | NeonHttpDatabase<typeof schema>
-  | PostgresJsDatabase<typeof schema>;
-
-// Check if we're using Neon/Vercel (production) or local Postgres
-const isNeonConnection = process.env.POSTGRES_URL?.includes("neon.tech");
-
-let db: DrizzleDatabase;
-if (isNeonConnection) {
-  // Production: Use Neon HTTP connection
-  const sql = neon(process.env.POSTGRES_URL!);
-  db = drizzleNeon(sql, { schema });
-} else {
-  // Local development: Use standard Postgres connection
-  const client = postgres(process.env.POSTGRES_URL!);
-  db = drizzlePostgres(client, { schema });
+// Define a estrutura de cache que será usada no lugar do banco de dados
+interface DiagramCacheEntry {
+  username: string;
+  repo: string;
+  diagram: string;
+  explanation: string;
+  usedOwnKey: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export { db };
+// Inicializa o cache global se ainda não existir
+if (typeof globalThis.diagramCache === 'undefined') {
+  globalThis.diagramCache = [];
+}
+
+// Simula uma conexão de banco de dados, mas na verdade
+// só opera sobre o array em memória
+export const db = {
+  select: () => ({
+    from: () => ({
+      where: () => ({
+        limit: () => globalThis.diagramCache,
+      }),
+    }),
+  }),
+  execute: async () => [{ test: 1 }], // Simula uma execução SQL bem-sucedida
+};

@@ -1,41 +1,26 @@
-// Example model schema from the Drizzle docs
-// https://orm.drizzle.team/docs/sql-schema-declaration
+// Versão simplificada sem Drizzle ORM
+// Este arquivo fornece apenas estruturas de dados simuladas
+// para que o resto da aplicação funcione sem alterações significativas
 
-import { sql } from "drizzle-orm";
-import {
-  pgTableCreator,
-  timestamp,
-  varchar,
-  primaryKey,
-  boolean,
-} from "drizzle-orm/pg-core";
+// Definição simulada da tabela diagramCache para compatibilidade com a aplicação
+export const diagramCache = {
+  username: { name: 'username' },
+  repo: { name: 'repo' },
+  diagram: { name: 'diagram' },
+  explanation: { name: 'explanation' },
+  createdAt: { name: 'created_at' },
+  updatedAt: { name: 'updated_at' },
+  usedOwnKey: { name: 'used_own_key' },
+};
 
-/**
- * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
- * database instance for multiple projects.
- *
- * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
- */
-export const createTable = pgTableCreator((name) => `flowagents_${name}`);
+// Funções auxiliares que simulam operadores SQL do Drizzle
+export const eq = (field: any, value: any) => ({ field, value, operator: 'eq' });
+export const and = (...conditions: any[]) => ({ conditions, operator: 'and' });
 
-export const diagramCache = createTable(
-  "diagram_cache",
-  {
-    username: varchar("username", { length: 256 }).notNull(),
-    repo: varchar("repo", { length: 256 }).notNull(),
-    diagram: varchar("diagram", { length: 10000 }).notNull(), // Adjust length as needed
-    explanation: varchar("explanation", { length: 10000 })
-      .notNull()
-      .default("No explanation provided"), // Default explanation to avoid data loss of existing rows
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .default(sql`CURRENT_TIMESTAMP`)
-      .notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(
-      () => new Date(),
-    ),
-    usedOwnKey: boolean("used_own_key").default(false),
-  },
-  (table) => ({
-    pk: primaryKey({ columns: [table.username, table.repo] }),
-  }),
-);
+// Função de criação de tabela simulada
+export const createTable = (name: string, columns: any, config?: any) => columns;
+
+// Simulação de SQL para compatibilidade com código existente
+export const sql = {
+  raw: (str: string) => str,
+};
