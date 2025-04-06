@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "../../../db";
-import { diagrams } from "../../../db/schema";
-import { eq } from "drizzle-orm";
+
+// Armazenamento em memória para desenvolvimento
+let diagramas: any[] = [];
 
 export async function GET() {
   try {
-    // Buscar todos os diagramas do banco de dados
-    const result = await db.select().from(diagrams).orderBy(diagrams.createdAt);
-    
-    return NextResponse.json(result, { status: 200 });
+    // Retornar todos os diagramas
+    return NextResponse.json(diagramas, { status: 200 });
   } catch (error) {
     console.error("Erro ao buscar diagramas:", error);
     return NextResponse.json(
@@ -30,15 +28,18 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Inserir o novo diagrama no banco de dados
-    const result = await db.insert(diagrams).values({
+    // Criar um novo diagrama
+    const newDiagram = {
+      id: diagramas.length + 1,
       prompt,
       diagram,
       createdAt: new Date(),
       updatedAt: new Date()
-    }).returning();
+    };
     
-    return NextResponse.json(result[0], { status: 201 });
+    diagramas.push(newDiagram);
+    
+    return NextResponse.json(newDiagram, { status: 201 });
   } catch (error) {
     console.error("Erro ao criar diagrama:", error);
     return NextResponse.json(
@@ -60,8 +61,17 @@ export async function DELETE(request: NextRequest) {
       );
     }
     
-    // Excluir o diagrama do banco de dados
-    await db.delete(diagrams).where(eq(diagrams.id, parseInt(id)));
+    // Filtrar para remover o diagrama
+    const diagramaIndex = diagramas.findIndex(d => d.id === parseInt(id));
+    
+    if (diagramaIndex === -1) {
+      return NextResponse.json(
+        { error: "Diagrama não encontrado" },
+        { status: 404 }
+      );
+    }
+    
+    diagramas = diagramas.filter(d => d.id !== parseInt(id));
     
     return NextResponse.json(
       { message: "Diagrama excluído com sucesso" },
@@ -74,4 +84,4 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}
