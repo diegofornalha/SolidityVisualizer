@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '~/components/ui/card';
 import { Button } from '~/components/ui/button';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Download, Eye, Share2 } from 'lucide-react';
 import { useToast } from '~/components/ui/use-toast';
 import { DiagramaZoom } from './diagrama-zoom';
 
@@ -97,10 +97,26 @@ export default function DiagramasPage() {
     }
   };
 
+  const handleDownload = (codigo: string, titulo: string) => {
+    // Criar SVG ou PNG do diagrama
+    const element = document.createElement('a');
+    const file = new Blob([codigo], {type: 'text/plain'});
+    element.href = URL.createObjectURL(file);
+    element.download = `${titulo.replace(/\s+/g, '-').toLowerCase()}.mmd`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+
+    toast({
+      title: "Sucesso",
+      description: "Diagrama baixado com sucesso.",
+    });
+  };
+
   if (carregando) {
     return (
-      <div className="flex flex-col gap-8 p-8">
-        <h1 className="text-2xl font-bold">Seus Diagramas</h1>
+      <div className="container mx-auto py-8 px-4">
+        <h1 className="text-3xl font-bold mb-8">Meus Diagramas</h1>
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
         </div>
@@ -110,8 +126,8 @@ export default function DiagramasPage() {
 
   if (erro) {
     return (
-      <div className="flex flex-col gap-8 p-8">
-        <h1 className="text-2xl font-bold">Seus Diagramas</h1>
+      <div className="container mx-auto py-8 px-4">
+        <h1 className="text-3xl font-bold mb-8">Meus Diagramas</h1>
         <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           <h3 className="font-semibold">Erro ao carregar diagramas</h3>
           <p>{erro}</p>
@@ -122,13 +138,21 @@ export default function DiagramasPage() {
 
   if (diagramas.length === 0) {
     return (
-      <div className="flex flex-col gap-8 p-8">
-        <h1 className="text-2xl font-bold">Seus Diagramas</h1>
+      <div className="container mx-auto py-8 px-4">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Meus Diagramas</h1>
+          <Button onClick={() => window.location.href = '/visualizar'} className="gradient-hover">
+            Criar Novo Diagrama
+          </Button>
+        </div>
         <div className="text-center p-12 bg-gray-50 rounded-lg border border-gray-200">
           <h3 className="text-lg font-medium text-gray-700 mb-2">Nenhum diagrama encontrado</h3>
-          <p className="text-gray-500">
-            Gere um novo diagrama na página inicial para visualizá-lo aqui.
+          <p className="text-gray-500 mb-4">
+            Gere um novo diagrama para visualizá-lo aqui.
           </p>
+          <Button onClick={() => window.location.href = '/visualizar'} className="gradient-hover">
+            Criar Diagrama
+          </Button>
         </div>
       </div>
     );
@@ -141,33 +165,63 @@ export default function DiagramasPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-8">Meus Diagramas</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Meus Diagramas</h1>
+        <Button onClick={() => window.location.href = '/visualizar'} className="gradient-hover">
+          Criar Novo Diagrama
+        </Button>
+      </div>
       
-      <div className="grid gap-8 md:grid-cols-1">
+      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
         {diagramasOrdenados.map((diagrama) => (
-          <Card key={diagrama.id} className="overflow-hidden">
+          <Card key={diagrama.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
             <CardHeader className="pb-2">
               <div className="flex justify-between items-start">
-                <CardTitle className="text-lg">{diagrama.prompt}</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDelete(diagrama.id)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <Trash2 className="h-5 w-5" />
-                </Button>
+                <CardTitle className="text-lg truncate" title={diagrama.prompt}>
+                  {diagrama.prompt.length > 40 ? diagrama.prompt.substring(0, 40) + '...' : diagrama.prompt}
+                </CardTitle>
               </div>
               <p className="text-sm text-gray-500 mt-1">
                 {formatDate(diagrama.createdAt)}
               </p>
             </CardHeader>
             <CardContent>
-              <DiagramaZoom codigo={diagrama.diagram} titulo={diagrama.prompt} />
+              <div className="h-64 overflow-hidden bg-gray-50 rounded-md">
+                <DiagramaZoom codigo={diagrama.diagram} titulo={diagrama.prompt} />
+              </div>
             </CardContent>
+            <CardFooter className="flex justify-between pt-4 border-t">
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDownload(diagrama.diagram, diagrama.prompt)}
+                  title="Baixar diagrama"
+                >
+                  <Download className="h-4 w-4 mr-1" /> Baixar
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(`/diagram?code=${encodeURIComponent(diagrama.diagram)}`, '_blank')}
+                  title="Visualizar em tela cheia"
+                >
+                  <Eye className="h-4 w-4 mr-1" /> Visualizar
+                </Button>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDelete(diagrama.id)}
+                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                title="Excluir diagrama"
+              >
+                <Trash2 className="h-4 w-4 mr-1" /> Excluir
+              </Button>
+            </CardFooter>
           </Card>
         ))}
       </div>
     </div>
   );
-} 
+}
