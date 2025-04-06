@@ -4,6 +4,7 @@
 /node_modules
 /.pnp
 .pnp.js
+package-lock.json
 
 # testing
 /coverage
@@ -36,6 +37,8 @@ yarn-error.log*
 .env
 .env*.local
 .env-e
+.env.development
+.env.production
 
 # vercel
 .vercel
@@ -56,3 +59,7 @@ venv
 .cursor/
 
 api_keys.txt
+
+# logs
+**/deploy-log.txt
+deploy-log.txt
