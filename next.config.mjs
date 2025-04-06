@@ -1,7 +1,6 @@
 /**
  * Configuração Next.js para build na Vercel
  */
-import './src/env.mjs';
 
 /** @type {import('next').NextConfig} */
 const config = {
@@ -18,6 +17,10 @@ const config = {
   
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  
+  experimental: {
+    esmExternals: 'loose',
   },
   
   webpack: (config) => {
