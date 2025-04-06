@@ -1,9 +1,3 @@
-/**
- * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially useful
- * for Docker builds.
- */
-import './src/env.mjs';
-
 /** @type {import('next').NextConfig} */
 const config = {
   reactStrictMode: true,
@@ -24,29 +18,15 @@ const config = {
     ignoreDuringBuilds: true,
   },
   
-  webpack: (config, { dev, isServer }) => {
+  webpack: (config) => {
     // Alias para importações mais curtas
     config.resolve.alias = {
       ...config.resolve.alias,
       '~': './src',
     };
     
-    // Em produção, otimizações adicionais
-    if (!dev) {
-      // Otimização para chunks e carregamento
-      config.optimization = {
-        ...config.optimization,
-        runtimeChunk: 'single',
-        splitChunks: {
-          chunks: 'all',
-          maxInitialRequests: Infinity,
-          minSize: 20000,
-        }
-      };
-    }
-    
     return config;
   },
 };
 
-export default config;
+module.exports = config;
