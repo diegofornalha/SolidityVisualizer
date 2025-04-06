@@ -1,11 +1,70 @@
 import { NextResponse } from 'next/server';
-import { saveDiagram, getAllDiagrams, getDiagramById, updateDiagram, deleteDiagram } from '~/db/queries';
+
+// Armazenamento em memória para desenvolvimento
+let diagrams = [
+  {
+    id: 1,
+    title: 'Contrato ERC20 Básico',
+    prompt: 'Crie um diagrama para um contrato ERC20 básico',
+    diagram: `flowchart TD
+      subgraph Blockchain
+        ContratoPrincipal --> Proprietário
+        ContratoPrincipal --> TokenERC20
+        ContratoPrincipal --> Autorização
+        
+        subgraph Funções
+          Transferência
+          Emissão
+          Queima
+          Pausa
+        end
+        
+        ContratoPrincipal --> Funções
+        
+        subgraph Eventos
+          Transfer
+          Approval
+          Mint
+          Burn
+        end
+        
+        Funções --> Eventos
+      end
+      
+      subgraph Interações
+        Usuário --> ContratoPrincipal
+        Usuário --> Interface
+        Interface --> ContratoPrincipal
+      end
+      
+      style ContratoPrincipal fill:#f96,stroke:#333
+      style Funções fill:#69f,stroke:#333
+      style Eventos fill:#6c9,stroke:#333`,
+    apiKey: 'demo',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  }
+];
 
 export async function POST(request: Request) {
   try {
     const { prompt, diagram, title } = await request.json();
-    const savedDiagram = await saveDiagram(prompt, diagram, title);
-    return NextResponse.json(savedDiagram);
+    
+    const id = diagrams.length > 0 ? Math.max(...diagrams.map(d => d.id)) + 1 : 1;
+    const now = new Date();
+    
+    const newDiagram = {
+      id,
+      prompt,
+      diagram,
+      title: title || 'Diagrama sem título',
+      apiKey: 'demo',
+      createdAt: now,
+      updatedAt: now
+    };
+    
+    diagrams.push(newDiagram);
+    return NextResponse.json(newDiagram);
   } catch (error) {
     console.error('Erro ao salvar diagrama:', error);
     return NextResponse.json({ error: 'Erro ao salvar diagrama' }, { status: 500 });
@@ -19,7 +78,7 @@ export async function GET(request: Request) {
 
     if (id) {
       try {
-        const diagram = await getDiagramById(Number(id));
+        const diagram = diagrams.find(d => d.id === Number(id));
         if (!diagram) {
           return NextResponse.json({ error: 'Diagrama não encontrado' }, { status: 404 });
         }
@@ -30,30 +89,7 @@ export async function GET(request: Request) {
       }
     }
 
-    try {
-      const diagrams = await getAllDiagrams();
-      return NextResponse.json(diagrams);
-    } catch (error) {
-      console.error('Erro ao buscar diagramas do banco:', error);
-      // Retornar dados fake para quando o banco não estiver disponível
-      const mockDiagrams = [
-        {
-          id: 1,
-          title: 'teste',
-          prompt: 'Crie um diagrama de fluxo simples para um sistema de agendamento com 4 etapas: 1. Início: Solicitação 2. Processo: Verificação de disponibilidade 3. Processo: Confirmação 4. Fim: Agendamento concluído Use flowchart TD (top-down) com cores básicas.',
-          diagram: `flowchart TD
-            A([Início]) --> B[Receber Solicitação]
-            B --> C{Validar Dados}
-            C -->|Válidos| D[Processar]
-            C -->|Inválidos| E[Solicitar Correção]
-            E --> B
-            D --> F[Gerar Resultado]
-            F --> G([Fim])`,
-          created_at: new Date().toISOString(),
-        }
-      ];
-      return NextResponse.json(mockDiagrams);
-    }
+    return NextResponse.json(diagrams);
   } catch (error) {
     console.error('Erro ao buscar diagramas:', error);
     return NextResponse.json({ error: 'Erro ao buscar diagramas' }, { status: 500 });
@@ -63,11 +99,19 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
   try {
     const { id, ...updates } = await request.json();
-    const updatedDiagram = await updateDiagram(Number(id), updates);
-    if (!updatedDiagram.length) {
+    const index = diagrams.findIndex(d => d.id === Number(id));
+    
+    if (index === -1) {
       return NextResponse.json({ error: 'Diagrama não encontrado' }, { status: 404 });
     }
-    return NextResponse.json(updatedDiagram[0]);
+    
+    diagrams[index] = {
+      ...diagrams[index],
+      ...updates,
+      updatedAt: new Date()
+    };
+    
+    return NextResponse.json(diagrams[index]);
   } catch (error) {
     console.error('Erro ao atualizar diagrama:', error);
     return NextResponse.json({ error: 'Erro ao atualizar diagrama' }, { status: 500 });
@@ -83,13 +127,18 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'ID não fornecido' }, { status: 400 });
     }
 
-    const deletedDiagram = await deleteDiagram(Number(id));
-    if (!deletedDiagram.length) {
+    const index = diagrams.findIndex(d => d.id === Number(id));
+    
+    if (index === -1) {
       return NextResponse.json({ error: 'Diagrama não encontrado' }, { status: 404 });
     }
-    return NextResponse.json(deletedDiagram[0]);
+    
+    const deletedDiagram = diagrams[index];
+    diagrams = diagrams.filter(d => d.id !== Number(id));
+    
+    return NextResponse.json(deletedDiagram);
   } catch (error) {
     console.error('Erro ao excluir diagrama:', error);
     return NextResponse.json({ error: 'Erro ao excluir diagrama' }, { status: 500 });
   }
-} 
+}
