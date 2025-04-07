@@ -1,9 +1,0 @@
-Backend deployment log - Solidity Visualizer
-
-Deployment started at 2023-11-10 14:30:00
-Installing requirements...
-Successfully installed all dependencies
-Starting server on port 8000
-Server successfully started
-
-Deployment completed at 2023-11-10 14:35:12

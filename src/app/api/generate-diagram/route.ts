@@ -1,170 +1,119 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
 
-// Versão simplificada da API para funcionamento offline
-export async function POST(request: Request) {
+// Função que simula o uso da LLM ARCEE para gerar um diagrama Mermaid
+async function generateMermaidDiagram(prompt: string): Promise<string> {
+  // Aqui seria a integração real com a LLM ARCEE
+  // Por enquanto estamos apenas simulando a resposta
+
+  console.log('Processando prompt com ARCEE:', prompt);
+  
+  // Identificar palavras-chave no prompt para gerar um diagrama relevante
+  const keywords = prompt.toLowerCase();
+  
+  // Diagrama padrão para NFT Marketplace
+  if (keywords.includes('nft') || keywords.includes('marketplace') || keywords.includes('token')) {
+    return `
+sequenceDiagram
+    participant User as Usuário
+    participant Market as NFT Marketplace
+    participant NFT as Agente NFT
+    participant Payment as Sistema de Pagamento
+    
+    User->>Market: Listar NFT para venda
+    Market->>NFT: Verificar propriedade
+    NFT-->>Market: Confirmação de propriedade
+    Market->>Market: Registrar NFT no mercado
+    Market-->>User: Confirmação de listagem
+    
+    User->>Market: Comprar NFT
+    Market->>Payment: Processar pagamento
+    Payment-->>Market: Confirmação de pagamento
+    Market->>NFT: Transferir propriedade
+    NFT-->>Market: Propriedade transferida
+    Market-->>User: Confirmação de compra
+    `;
+  }
+  
+  // Diagrama para votação blockchain
+  if (keywords.includes('vota') || keywords.includes('eleição') || keywords.includes('governança')) {
+    return `
+sequenceDiagram
+    participant Voter as Eleitor
+    participant Contract as Agente de Votação
+    participant Chain as Blockchain
+    
+    Voter->>Contract: Registrar para votar
+    Contract->>Chain: Verificar identidade
+    Chain-->>Contract: Identidade verificada
+    Contract-->>Voter: Registro confirmado
+    
+    Voter->>Contract: Enviar voto
+    Contract->>Contract: Verificar elegibilidade
+    Contract->>Chain: Registrar voto
+    Chain-->>Contract: Voto registrado
+    Contract-->>Voter: Confirmação de voto
+    
+    Voter->>Contract: Solicitar resultados
+    Contract->>Chain: Calcular resultados
+    Chain-->>Contract: Resultados calculados
+    Contract-->>Voter: Exibir resultados
+    `;
+  }
+  
+  // Diagrama genérico se nenhum padrão for encontrado
+  return `
+sequenceDiagram
+    participant User as Usuário
+    participant Contract as Agente Inteligente
+    participant Blockchain
+    
+    User->>Contract: Iniciar transação
+    Contract->>Contract: Validar dados
+    Contract->>Blockchain: Executar lógica
+    Blockchain-->>Contract: Confirmar execução
+    Contract-->>User: Retornar resultado
+    
+    User->>Contract: Consultar estado
+    Contract->>Blockchain: Ler dados
+    Blockchain-->>Contract: Retornar dados
+    Contract-->>User: Exibir estado atual
+  `;
+}
+
+export async function POST(request: NextRequest) {
   try {
-    const { prompt, apiKey } = await request.json();
-
-    if (!prompt) {
+    const { prompt } = await request.json();
+    
+    if (!prompt || typeof prompt !== 'string') {
       return NextResponse.json(
-        { error: "Prompt não fornecido" },
+        { error: 'Prompt inválido ou ausente' },
         { status: 400 }
       );
     }
-
-    // Nesta versão simplificada, não vamos verificar a chave da API
-    // para que o sistema funcione sem depender da OpenAI
-
-    // Gerar um diagrama simplificado com base no prompt
-    const words = prompt.toLowerCase().split(/\s+/);
     
-    // Detectar o tipo de diagrama com base nas palavras-chave
-    let diagramType = "flowchart TD";
-    if (words.some(w => w.includes("classe") || w.includes("class") || w.includes("uml") || w.includes("entidade"))) {
-      diagramType = "classDiagram";
-    } else if (words.some(w => w.includes("sequencia") || w.includes("sequence") || w.includes("message"))) {
-      diagramType = "sequenceDiagram";
-    } else if (words.some(w => w.includes("estado") || w.includes("state") || w.includes("transição"))) {
-      diagramType = "stateDiagram-v2";
-    } else if (words.some(w => w.includes("er") || w.includes("entity") || w.includes("banco de dados") || w.includes("database"))) {
-      diagramType = "erDiagram";
-    }
-
-    // Gerar um diagrama de exemplo de contrato inteligente
-    const diagram = `${diagramType}
-    subgraph Blockchain
-      ContratoPrincipal --> Proprietário
-      ContratoPrincipal --> TokenERC20
-      ContratoPrincipal --> Autorização
-      
-      subgraph Funções
-        Transferência
-        Emissão
-        Queima
-        Pausa
-      end
-      
-      ContratoPrincipal --> Funções
-      
-      subgraph Eventos
-        Transfer
-        Approval
-        Mint
-        Burn
-      end
-      
-      Funções --> Eventos
-    end
+    // Log para debug
+    console.log('Recebido prompt:', prompt);
     
-    subgraph Interações
-      Usuário --> ContratoPrincipal
-      Usuário --> Interface
-      Interface --> ContratoPrincipal
-    end
+    // Gerar diagrama usando a função que simula o ARCEE
+    const diagram = await generateMermaidDiagram(prompt);
     
-    style ContratoPrincipal fill:#f96,stroke:#333
-    style Funções fill:#69f,stroke:#333
-    style Eventos fill:#6c9,stroke:#333`;
-
-    // Gerar código Solidity de exemplo
-    const solidityCode = `// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
-
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-
-contract TokenExample is ERC20, Ownable {
-    bool public paused;
-    mapping(address => bool) public whitelist;
+    // Log do diagrama gerado
+    console.log('Diagrama gerado com sucesso');
     
-    event Paused(address account);
-    event Unpaused(address account);
-    event WhitelistAdded(address account);
-    event WhitelistRemoved(address account);
-    
-    modifier whenNotPaused() {
-        require(!paused, "Token: token transfer while paused");
-        _;
-    }
-    
-    modifier onlyWhitelisted() {
-        require(whitelist[msg.sender], "Token: caller is not whitelisted");
-        _;
-    }
-    
-    constructor(string memory name, string memory symbol) ERC20(name, symbol) {
-        // Designate o criador do contrato como proprietário
-        _transferOwnership(msg.sender);
-        // Adicione o proprietário à whitelist
-        whitelist[msg.sender] = true;
-        emit WhitelistAdded(msg.sender);
-    }
-    
-    function mint(address to, uint256 amount) public onlyOwner {
-        _mint(to, amount);
-    }
-    
-    function burn(uint256 amount) public {
-        _burn(msg.sender, amount);
-    }
-    
-    function pause() public onlyOwner {
-        paused = true;
-        emit Paused(msg.sender);
-    }
-    
-    function unpause() public onlyOwner {
-        paused = false;
-        emit Unpaused(msg.sender);
-    }
-    
-    function addToWhitelist(address account) public onlyOwner {
-        whitelist[account] = true;
-        emit WhitelistAdded(account);
-    }
-    
-    function removeFromWhitelist(address account) public onlyOwner {
-        whitelist[account] = false;
-        emit WhitelistRemoved(account);
-    }
-    
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal whenNotPaused override {
-        super._beforeTokenTransfer(from, to, amount);
-    }
-}`;
-
-    // Gerar uma explicação simples do contrato
-    const explanation = `Este contrato representa um token ERC20 com funcionalidades adicionais de segurança e controle:
-
-1. **Características do Token:**
-   - Implementa a interface ERC20 padrão com funções como transfer, approve, transferFrom
-   - Herda do contrato Ownable para controle de acesso a funções administrativas
-
-2. **Mecanismos de Segurança:**
-   - Função de pausa que pode interromper todas as transferências em caso de emergencia
-   - Sistema de whitelist para permitir acesso a funções restritas
-   - Modificadores personalizados para verificar estado e permissões
-
-3. **Gerenciamento de Tokens:**
-   - Capacidade de cunhar (mint) novos tokens, restrita ao proprietário
-   - Função burn para destruir tokens, disponível para qualquer usuário queimar seus próprios tokens
-
-4. **Eventos:**
-   - Eventos para pausa/retomada do contrato
-   - Eventos para adição/remoção da whitelist
-   - Eventos padrão do ERC20 (Transfer, Approval)`;
-
-    return NextResponse.json({
-      diagram_code: diagram,
-      solidity_code: solidityCode,
-      explanation: explanation
+    return NextResponse.json({ 
+      success: true, 
+      diagram,
+      message: 'Diagrama gerado com sucesso'
     });
-
+    
   } catch (error) {
-    console.error("Erro ao gerar diagrama:", error);
+    console.error('Erro ao processar requisição:', error);
     return NextResponse.json(
-      { error: "Erro ao gerar o diagrama" },
+      { 
+        error: 'Falha ao processar a solicitação',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+      },
       { status: 500 }
     );
   }
-}
+} 

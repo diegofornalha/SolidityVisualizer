@@ -1,0 +1,89 @@
+.container {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding-top: 1.5rem;
+  padding-right: 1.5rem;
+  width: auto;
+}
+
+.glitchContainer {
+  position: relative;
+  min-width: fit-content;
+  display: inline-block;
+}
+
+.glitchText {
+  background-image: linear-gradient(to right, #0066ff, #0099ff);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  font-size: 30px;
+  font-weight: 700;
+  position: relative;
+  text-shadow: 0 0 2px rgba(0,102,255,0.3);
+  letter-spacing: 1px;
+}
+
+.glitchText::before {
+  content: 'FLOWPIX';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-image: linear-gradient(to right, #0066ff, #0099ff);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  z-index: -1;
+  text-shadow: 0 0 3px rgba(0,153,255,0.7);
+}
+
+.glitchText::after {
+  content: 'FLOWPIX';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  color: transparent;
+  background-color: transparent;
+  animation: glitch 1.5s infinite alternate-reverse;
+  animation-delay: 0.5s;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glitchText::after {
+    animation: none;
+  }
+}
+
+@keyframes glitch {
+  0% { clip: rect(6px, 9999px, 13px, 0); -webkit-text-stroke: 2px #00ccff; left: -1px; top: 1px; }
+  5% { clip: rect(23px, 9999px, 25px, 0); -webkit-text-stroke: 2px #0066ff; left: 1px; top: -1px; }
+  10% { clip: rect(25px, 9999px, 16px, 0); -webkit-text-stroke: 2px #0033cc; left: -2px; top: 0px; }
+  15% { clip: rect(16px, 9999px, 23px, 0); -webkit-text-stroke: 2px #00ccff; left: 0px; top: -2px; }
+  20% { clip: rect(18px, 9999px, 26px, 0); -webkit-text-stroke: 2px #0066ff; left: 2px; top: 1px; }
+  25% { clip: rect(26px, 9999px, 12px, 0); -webkit-text-stroke: 2px #0033cc; left: -1px; top: 2px; }
+  30% { clip: rect(19px, 9999px, 22px, 0); -webkit-text-stroke: 2px #00ccff; left: 1px; top: -2px; }
+  35% { clip: rect(6px, 9999px, 28px, 0); -webkit-text-stroke: 2px #0066ff; left: -2px; top: 0px; }
+  40% { clip: rect(20px, 9999px, 5px, 0); -webkit-text-stroke: 2px #0033cc; left: 2px; top: -2px; }
+  45% { clip: rect(22px, 9999px, 29px, 0); -webkit-text-stroke: 2px #00ccff; left: 0px; top: 2px; }
+  50% { clip: rect(15px, 9999px, 23px, 0); -webkit-text-stroke: 2px #0066ff; left: -2px; top: -1px; }
+  55% { clip: rect(19px, 9999px, 27px, 0); -webkit-text-stroke: 2px #0033cc; left: 1px; top: 0px; }
+  60% { clip: rect(9px, 9999px, 17px, 0); -webkit-text-stroke: 2px #00ccff; left: -1px; top: -2px; }
+  65% { clip: rect(24px, 9999px, 21px, 0); -webkit-text-stroke: 2px #0066ff; left: 2px; top: 1px; }
+  70% { clip: rect(21px, 9999px, 10px, 0); -webkit-text-stroke: 2px #0033cc; left: 0px; top: 2px; }
+  75% { clip: rect(17px, 9999px, 27px, 0); -webkit-text-stroke: 2px #00ccff; left: -2px; top: -1px; }
+  80% { clip: rect(20px, 9999px, 25px, 0); -webkit-text-stroke: 2px #0066ff; left: 1px; top: 0px; }
+  85% { clip: rect(15px, 9999px, 16px, 0); -webkit-text-stroke: 2px #0033cc; left: -2px; top: 2px; }
+  90% { clip: rect(12px, 9999px, 22px, 0); -webkit-text-stroke: 2px #00ccff; left: 0px; top: -2px; }
+  95% { clip: rect(20px, 9999px, 19px, 0); -webkit-text-stroke: 2px #0066ff; left: 2px; top: 1px; }
+  100% { clip: rect(13px, 9999px, 18px, 0); -webkit-text-stroke: 2px #0033cc; left: -1px; top: -1px; }
+} 

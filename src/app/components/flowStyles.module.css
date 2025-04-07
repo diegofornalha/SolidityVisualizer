@@ -1,0 +1,88 @@
+.item {
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  border: 1px solid #003366;
+  padding: 8px;
+  border-radius: 3px;
+  background-color: rgba(0, 191, 255, 0.2);
+  color: white;
+  font-size: 14px;
+  min-width: 120px;
+  text-align: center;
+}
+
+.item:hover {
+  border: 1px solid #00BFFF;
+  background-color: rgba(0, 191, 255, 0.3);
+}
+
+.actor {
+  background-color: rgba(64, 196, 255, 0.2);
+  border-color: #0078d7;
+}
+
+.system {
+  background-color: rgba(128, 0, 128, 0.2);
+  border-color: #800080;
+}
+
+.highlight {
+  background-color: rgba(255, 213, 79, 0.2);
+  border-color: #ffc107;
+  font-weight: bold;
+}
+
+.container {
+  width: 100%;
+  height: 100%;
+  background-color: black;
+  color: #00BFFF;
+}
+
+.backLink {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  z-index: 1000;
+  color: #00BFFF;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
+
+.reactFlow {
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 255, 0.1);
+}
+
+/* Handle dos nós */
+:global(.react-flow__handle) {
+  width: 8px;
+  height: 8px;
+  background-color: #00BFFF;
+  border: 1px solid #fff;
+}
+
+/* Estilo das arestas */
+:global(.react-flow__edge-path) {
+  stroke: #00BFFF;
+  stroke-width: 1.5px;
+}
+
+/* Estilo dos controles */
+:global(.react-flow__controls) {
+  background-color: rgba(0, 0, 0, 0.8);
+  border-radius: 4px;
+  padding: 4px;
+}
+
+:global(.react-flow__controls-button) {
+  background-color: rgba(0, 0, 0, 0.8);
+  border: 1px solid #00BFFF;
+  color: #00BFFF;
+} 
